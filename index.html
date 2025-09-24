@@ -320,6 +320,19 @@
                  sheetInfoContainer.innerHTML = "<p>No Google Sheet linked. The first time you sync, a new sheet named 'Workout Logs SPA' will be created in your Google Drive.</p>";
             }
         };
+        
+        async function getFirstSheetName(spreadsheetId) {
+            try {
+                const response = await gapi.client.sheets.spreadsheets.get({
+                    spreadsheetId,
+                });
+                const firstSheet = response.result.sheets[0];
+                return firstSheet ? firstSheet.properties.title : null;
+            } catch (err) {
+                sheetsStatus.textContent = `Error getting sheet name: ${err.result.error.message}`;
+                return null;
+            }
+        }
 
         async function createSheetIfNotExists() {
             let spreadsheetId = localStorage.getItem('spreadsheetId');
@@ -351,6 +364,12 @@
             const spreadsheetId = await createSheetIfNotExists();
             if (!spreadsheetId) return;
 
+            const sheetName = await getFirstSheetName(spreadsheetId);
+            if (!sheetName) {
+                 sheetsStatus.textContent = "Could not find a sheet to write to in the spreadsheet.";
+                 return;
+            }
+
             sheetsStatus.textContent = "Syncing data to sheet...";
             const logs = JSON.parse(localStorage.getItem('workoutLogs')) || [];
             const values = [["Date", "Week", "DayName", "Exercise", "Weight(kg)", "Reps", "RPE"]];
@@ -363,10 +382,10 @@
             });
 
             try {
-                await gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId, range: 'Sheet1' });
+                await gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId, range: sheetName });
                 await gapi.client.sheets.spreadsheets.values.update({
                     spreadsheetId,
-                    range: 'Sheet1!A1',
+                    range: `${sheetName}!A1`,
                     valueInputOption: 'USER_ENTERED',
                     resource: { values },
                 });
@@ -383,9 +402,15 @@
                 return;
             }
             sheetsStatus.textContent = "Loading from sheet...";
+            
+            const sheetName = await getFirstSheetName(spreadsheetId);
+            if (!sheetName) {
+                 sheetsStatus.textContent = "Could not find a sheet to read from in the spreadsheet.";
+                 return;
+            }
 
             try {
-                const response = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: 'Sheet1!A:G' });
+                const response = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `${sheetName}!A:G` });
                 const rows = response.result.values;
                 if (!rows || rows.length <= 1) {
                     sheetsStatus.textContent = "Sheet is empty or has no data to load.";
