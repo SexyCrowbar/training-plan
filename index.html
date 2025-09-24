@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Warm Neutral -->
-    <!-- Application Structure Plan: The SPA is designed with a top navigation bar to switch between sections: 'Overview', 'The Plan', 'Key Concepts', 'Logs', and 'Data Management'. This tabbed structure was chosen to organize the dense 16-week schedule and related features into logical, digestible parts. 'The Plan' is the core interactive component for viewing workouts and logging sessions. 'Session Logs' allows for viewing and managing saved data locally. 'Data Management' adds Google Sheets integration for backup and recovery, now with automated sheet creation. This architecture supports a full workflow from planning, to execution, to data persistence. -->
+    <!-- Application Structure Plan: The SPA is designed with a top navigation bar to switch between sections: 'Overview', 'The Plan', 'Key Concepts', 'Logs', and 'Data Management'. This tabbed structure was chosen to organize the dense 16-week schedule and related features into logical, digestible parts. 'The Plan' is the core interactive component for viewing workouts and logging sessions. 'Session Logs' allows for viewing and managing saved data locally. 'Data Management' has been updated to a CSV import/export system for simpler, local-first data backup. -->
     <!-- Visualization & Content Choices: Report Info: Program's weekly volume. Goal: Compare upper vs. lower body focus. Viz: Chart.js Bar Chart. Interaction: Hover for details. Justification: Visually confirms the program's core philosophy of high upper-body volume. | Report Info: 16 weeks of daily workouts. Goal: Organize and display specific workouts. Presentation: Interactive week/day selector and logging modal. Interaction: User selects week/day to view plan and log performance. Justification: Breaks down a massive amount of text into a manageable, task-oriented format. All diagrams and layouts use HTML/CSS. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
@@ -43,15 +43,8 @@
             background-color: #C5A06D;
             color: #FFFFFF;
         }
-        #log-modal, #gapi-modal {
+        #log-modal {
             transition: opacity 0.3s ease;
-        }
-        .g-button {
-            background-color: #4285F4;
-            color: white;
-        }
-        .g-button:hover {
-            background-color: #357ae8;
         }
     </style>
 </head>
@@ -131,7 +124,7 @@
             <section id="logs" class="hidden space-y-6">
                  <div class="bg-white p-6 rounded-lg shadow-sm">
                     <h2 class="text-2xl font-bold mb-4 text-gray-800">Your Session History</h2>
-                    <p class="text-gray-700 leading-relaxed mb-4">This section displays all the workout sessions you have logged locally in your browser. Use the "Data Management" tab to sync this data with Google Sheets.</p>
+                    <p class="text-gray-700 leading-relaxed mb-4">This section displays all the workout sessions you have logged locally in your browser. Use the "Data Management" tab to back up this data.</p>
                     <div id="logs-container" class="space-y-4">
                         <p>No sessions logged yet.</p>
                     </div>
@@ -140,39 +133,16 @@
 
             <section id="data" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-2xl font-bold mb-4 text-gray-800">Google Sheets Integration</h2>
-                     <div class="prose prose-sm max-w-none">
-                        <p>To back up your logs, this app can create and manage a Google Sheet in your Google Drive. This requires a Client ID from Google to authorize the application.</p>
-                        <ol>
-                            <li><a href="https://developers.google.com/workspace/guides/create-credentials" target="_blank" class="text-blue-600 hover:underline">Follow these instructions to create your OAuth 2.0 Client ID</a>.
-                                <ul class="list-disc pl-6">
-                                    <li>When asked for an "Application type", choose "Web application".</li>
-                                    <li>Under "Authorized JavaScript origins", add the URL where this app is hosted.</li>
-                                </ul>
-                            </li>
-                            <li>Paste the Client ID below and log in.</li>
-                        </ol>
-                    </div>
-                    <div class="mt-4">
-                        <input type="text" id="client_id_input" placeholder="Paste your Google Client ID here" class="w-full p-2 border rounded">
-                    </div>
-                    <div id="auth-container" class="mt-4">
-                        <button id="authorize_button" class="g-button font-bold py-2 px-4 rounded">Log In with Google</button>
-                        <button id="signout_button" class="hidden bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-600">Log Out</button>
-                    </div>
-                    <p id="auth-status" class="mt-4 text-sm"></p>
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">Export Session History</h2>
+                    <p class="mb-4">Save all your logged sessions to a CSV file. This file can be used as a personal backup or imported back into this application on another device.</p>
+                    <button id="export-csv-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded hover:bg-green-700">Export to CSV</button>
                 </div>
-
-                <div id="gapi-controls" class="hidden bg-white p-6 rounded-lg shadow-sm space-y-4">
-                    <h3 class="text-xl font-semibold">Data Sync</h3>
-                    <div id="sheet-info-container" class="text-sm">
-                        <p>No Google Sheet linked. The first time you sync, a new sheet named 'Workout Logs SPA' will be created in your Google Drive.</p>
-                    </div>
-                    <div class="flex space-x-4 pt-4">
-                        <button id="sync_to_sheets_button" class="flex-1 bg-green-600 text-white font-bold py-2 px-4 rounded hover:bg-green-700">Sync to Sheets</button>
-                        <button id="load_from_sheets_button" class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">Load from Sheets</button>
-                    </div>
-                    <p id="sheets-status" class="mt-4 text-sm"></p>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">Import Session History</h2>
+                    <p class="mb-4">Load sessions from a previously exported CSV file. <strong class="text-red-600">Warning:</strong> This will overwrite all currently logged sessions in your browser.</p>
+                    <input type="file" id="import-csv-input" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                    <button id="import-csv-btn" class="mt-4 bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">Import from CSV</button>
+                    <p id="import-status" class="mt-4 text-sm"></p>
                 </div>
             </section>
         </main>
@@ -189,9 +159,6 @@
         </div>
     </div>
     
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
-
     <script>
         const programData = {
             "weeks": [
@@ -234,210 +201,6 @@
             ]
         };
 
-        let gapiInited = false;
-        let gisInited = false;
-        let tokenClient;
-        
-        const CLIENT_ID_INPUT = document.getElementById('client_id_input');
-        const authorizeButton = document.getElementById('authorize_button');
-        const signoutButton = document.getElementById('signout_button');
-        const gapiControls = document.getElementById('gapi-controls');
-        const authStatus = document.getElementById('auth-status');
-        const sheetsStatus = document.getElementById('sheets-status');
-        const syncToSheetsButton = document.getElementById('sync_to_sheets_button');
-        const loadFromSheetsButton = document.getElementById('load_from_sheets_button');
-        const sheetInfoContainer = document.getElementById('sheet-info-container');
-
-        function gapiLoaded() {
-            gapi.load('client', () => {
-                gapiInited = true;
-            });
-        }
-
-        function gisLoaded() {
-            gisInited = true;
-        }
-        
-        async function initializeGapiClient() {
-            await gapi.client.init({
-                discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4', 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-            });
-        }
-        
-        authorizeButton.onclick = async () => {
-            if (!CLIENT_ID_INPUT.value) {
-                authStatus.textContent = 'Please provide your Google Client ID.';
-                return;
-            }
-            if (!gapiInited || !gisInited) {
-                authStatus.textContent = 'Google API scripts are not loaded yet.';
-                return;
-            }
-
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID_INPUT.value,
-                scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file',
-                callback: async (resp) => {
-                    if (resp.error !== undefined) {
-                        authStatus.textContent = `Error: ${resp.error}`;
-                        throw (resp);
-                    }
-                    await initializeGapiClient();
-                    authorizeButton.classList.add('hidden');
-                    signoutButton.classList.remove('hidden');
-                    gapiControls.classList.remove('hidden');
-                    authStatus.textContent = 'Successfully authorized!';
-                    updateSheetInfo();
-                },
-            });
-
-            if (gapi.client.getToken() === null) {
-                tokenClient.requestAccessToken({prompt: 'consent'});
-            } else {
-                tokenClient.requestAccessToken({prompt: ''});
-            }
-        };
-
-        signoutButton.onclick = () => {
-            const token = gapi.client.getToken();
-            if (token !== null) {
-                google.accounts.oauth2.revoke(token.access_token);
-                gapi.client.setToken('');
-                authorizeButton.classList.remove('hidden');
-                signoutButton.classList.add('hidden');
-                authStatus.textContent = 'You have been signed out.';
-                gapiControls.classList.add('hidden');
-            }
-        };
-
-        const updateSheetInfo = () => {
-            const spreadsheetId = localStorage.getItem('spreadsheetId');
-            if (spreadsheetId) {
-                sheetInfoContainer.innerHTML = `
-                    <p>Linked to Google Sheet: <a href="https://docs.google.com/spreadsheets/d/${spreadsheetId}" target="_blank" class="text-blue-600 hover:underline">${spreadsheetId}</a></p>
-                `;
-            } else {
-                 sheetInfoContainer.innerHTML = "<p>No Google Sheet linked. The first time you sync, a new sheet named 'Workout Logs SPA' will be created in your Google Drive.</p>";
-            }
-        };
-        
-        async function getFirstSheetName(spreadsheetId) {
-            try {
-                const response = await gapi.client.sheets.spreadsheets.get({
-                    spreadsheetId,
-                });
-                const firstSheet = response.result.sheets[0];
-                return firstSheet ? firstSheet.properties.title : null;
-            } catch (err) {
-                sheetsStatus.textContent = `Error getting sheet name: ${err.result.error.message}`;
-                return null;
-            }
-        }
-
-        async function createSheetIfNotExists() {
-            let spreadsheetId = localStorage.getItem('spreadsheetId');
-            if (spreadsheetId) {
-                return spreadsheetId;
-            }
-            
-            sheetsStatus.textContent = 'No sheet found. Creating a new one...';
-            try {
-                const response = await gapi.client.drive.files.create({
-                    resource: {
-                        name: 'Workout Logs SPA',
-                        mimeType: 'application/vnd.google-apps.spreadsheet',
-                    },
-                });
-                spreadsheetId = response.result.id;
-                localStorage.setItem('spreadsheetId', spreadsheetId);
-                updateSheetInfo();
-                sheetsStatus.textContent = 'New Google Sheet created successfully.';
-                return spreadsheetId;
-            } catch (err) {
-                 sheetsStatus.textContent = `Error creating sheet: ${err.result.error.message}`;
-                 return null;
-            }
-        }
-
-        syncToSheetsButton.onclick = async () => {
-            sheetsStatus.textContent = "Starting sync...";
-            const spreadsheetId = await createSheetIfNotExists();
-            if (!spreadsheetId) return;
-
-            const sheetName = await getFirstSheetName(spreadsheetId);
-            if (!sheetName) {
-                 sheetsStatus.textContent = "Could not find a sheet to write to in the spreadsheet.";
-                 return;
-            }
-
-            sheetsStatus.textContent = "Syncing data to sheet...";
-            const logs = JSON.parse(localStorage.getItem('workoutLogs')) || [];
-            const values = [["Date", "Week", "DayName", "Exercise", "Weight(kg)", "Reps", "RPE"]];
-            logs.forEach(log => {
-                log.exercises.forEach(ex => {
-                    ex.sets.forEach(set => {
-                         values.push([log.date, log.week, log.dayName, ex.name, set.weight, set.reps, set.rpe]);
-                    });
-                });
-            });
-
-            try {
-                await gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId, range: sheetName });
-                await gapi.client.sheets.spreadsheets.values.update({
-                    spreadsheetId,
-                    range: `${sheetName}!A1`,
-                    valueInputOption: 'USER_ENTERED',
-                    resource: { values },
-                });
-                sheetsStatus.textContent = "Successfully synced to Google Sheets!";
-            } catch (err) {
-                sheetsStatus.textContent = `Error syncing: ${err.result.error.message}`;
-            }
-        };
-        
-        loadFromSheetsButton.onclick = async () => {
-            const spreadsheetId = localStorage.getItem('spreadsheetId');
-            if (!spreadsheetId) {
-                sheetsStatus.textContent = "No sheet linked. Please sync data first to create one.";
-                return;
-            }
-            sheetsStatus.textContent = "Loading from sheet...";
-            
-            const sheetName = await getFirstSheetName(spreadsheetId);
-            if (!sheetName) {
-                 sheetsStatus.textContent = "Could not find a sheet to read from in the spreadsheet.";
-                 return;
-            }
-
-            try {
-                const response = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId, range: `${sheetName}!A:G` });
-                const rows = response.result.values;
-                if (!rows || rows.length <= 1) {
-                    sheetsStatus.textContent = "Sheet is empty or has no data to load.";
-                    return;
-                }
-                
-                const logMap = {};
-                rows.slice(1).forEach(row => {
-                    const [date, week, dayName, exName, weight, reps, rpe] = row;
-                    if (!date) return;
-                    if (!logMap[date]) logMap[date] = { date, week, dayName, exercises: {} };
-                    if (!logMap[date].exercises[exName]) logMap[date].exercises[exName] = { name: exName, sets: [] };
-                    logMap[date].exercises[exName].sets.push({ weight, reps, rpe });
-                });
-
-                const newLogs = Object.values(logMap).map(log => ({ ...log, exercises: Object.values(log.exercises) }));
-                
-                localStorage.setItem('workoutLogs', JSON.stringify(newLogs));
-                loadLogs(); 
-                if (document.querySelector('.nav-link[data-target="logs"]').classList.contains('active')) renderLogs();
-                sheetsStatus.textContent = "Successfully loaded data from Google Sheets!";
-
-            } catch (err) {
-                 sheetsStatus.textContent = `Error loading data: ${err.result.error.message}`;
-            }
-        };
-
         let sessionLogs = [];
         const navLinks = document.querySelectorAll('.nav-link');
         const sections = document.querySelectorAll('main section');
@@ -449,6 +212,10 @@
         const saveLogBtn = document.getElementById('save-log-btn');
         const cancelLogBtn = document.getElementById('cancel-log-btn');
         const logsContainer = document.getElementById('logs-container');
+        const exportCsvBtn = document.getElementById('export-csv-btn');
+        const importCsvInput = document.getElementById('import-csv-input');
+        const importCsvBtn = document.getElementById('import-csv-btn');
+        const importStatus = document.getElementById('import-status');
 
         const loadLogs = () => {
             sessionLogs = JSON.parse(localStorage.getItem('workoutLogs')) || [];
@@ -456,21 +223,24 @@
         const saveLogs = () => {
             localStorage.setItem('workoutLogs', JSON.stringify(sessionLogs));
         };
+
         const renderLogs = () => {
             logsContainer.innerHTML = '';
             if (sessionLogs.length === 0) {
                 logsContainer.innerHTML = '<p>No sessions logged yet.</p>';
                 return;
             }
-            const groupedLogs = sessionLogs.reduce((acc, log) => {
+             const groupedLogs = sessionLogs.reduce((acc, log) => {
                 const date = new Date(log.date).toLocaleDateString();
                 if (!acc[date]) acc[date] = [];
                 acc[date].push(log);
                 return acc;
             }, {});
-            const sortedDates = Object.keys(groupedLogs).sort((a, b) => new Date(b) - new Date(a));
+             const sortedDates = Object.keys(groupedLogs).sort((a, b) => {
+                return new Date(groupedLogs[b][0].date) - new Date(groupedLogs[a][0].date);
+            });
             logsContainer.innerHTML = sortedDates.map(date => {
-                const logsForDate = groupedLogs[date];
+                const logsForDate = groupedLogs[date].sort((a,b) => new Date(b.date) - new Date(a.date));
                 const dateHeader = `<h3 class="text-xl font-bold mt-4 pt-4 border-t">${date}</h3>`;
                 return dateHeader + logsForDate.map(log => `
                     <div class="p-4 bg-gray-50 rounded-lg mt-2">
@@ -613,6 +383,83 @@
             workoutDisplay.querySelectorAll('.log-session-btn').forEach(btn => btn.addEventListener('click', e => openLogModal(e.target.dataset.week, e.target.dataset.dayIndex)));
         };
         weekSelector.addEventListener('change', e => displayWorkout(e.target.value));
+
+        exportCsvBtn.addEventListener('click', () => {
+            const logs = JSON.parse(localStorage.getItem('workoutLogs')) || [];
+            if (logs.length === 0) {
+                alert('No logs to export.');
+                return;
+            }
+            const headers = ['Date', 'Week', 'DayName', 'Exercise', 'Weight(kg)', 'Reps', 'RPE'];
+            const csvRows = [headers.join(',')];
+            logs.forEach(log => {
+                log.exercises.forEach(ex => {
+                    ex.sets.forEach(set => {
+                        const row = [log.date, log.week, `"${log.dayName}"`, `"${ex.name}"`, set.weight, set.reps, set.rpe];
+                        csvRows.push(row.join(','));
+                    });
+                });
+            });
+
+            const csvString = csvRows.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'workout_logs.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        importCsvBtn.addEventListener('click', () => {
+            const file = importCsvInput.files[0];
+            if (!file) {
+                importStatus.textContent = 'Please select a file to import.';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const csv = event.target.result;
+                try {
+                    const lines = csv.split('\n').filter(line => line);
+                    const headers = lines.shift().split(',').map(h => h.replace(/"/g, ''));
+                    const logMap = {};
+
+                    lines.forEach(line => {
+                        const values = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g).map(v => v.replace(/"/g, ''));
+                        const entry = headers.reduce((obj, header, index) => {
+                            obj[header] = values[index];
+                            return obj;
+                        }, {});
+                        
+                        const { Date: date, Week: week, DayName: dayName, Exercise: exName, 'Weight(kg)': weight, Reps: reps, RPE: rpe } = entry;
+                        if (!date) return;
+                        
+                        if (!logMap[date]) {
+                            logMap[date] = { date, week, dayName, exercises: {} };
+                        }
+                        if (!logMap[date].exercises[exName]) {
+                            logMap[date].exercises[exName] = { name: exName, sets: [] };
+                        }
+                        logMap[date].exercises[exName].sets.push({ weight, reps, rpe });
+                    });
+                    
+                    const newLogs = Object.values(logMap).map(log => ({ ...log, exercises: Object.values(log.exercises) }));
+                    
+                    localStorage.setItem('workoutLogs', JSON.stringify(newLogs));
+                    loadLogs();
+                    renderLogs();
+                    importStatus.textContent = `Successfully imported ${newLogs.length} session(s).`;
+                    importCsvInput.value = '';
+                } catch (error) {
+                    importStatus.textContent = 'Error parsing CSV file. Please ensure it is in the correct format.';
+                }
+            };
+            reader.readAsText(file);
+        });
+
         const calculateVolume = () => programData.weeks.map(block => {
             let upperSets = 0, lowerSets = 0;
             block.days.forEach(day => {
@@ -627,9 +474,6 @@
             data: { labels: ['Weeks 1-4', 'Weeks 5-8', 'Weeks 9-12', 'Weeks 13-16'], datasets: [{ label: 'Upper Body Sets', data: volumeData.map(d => d.upperSets), backgroundColor: 'rgba(197, 160, 109, 0.7)' }, { label: 'Lower Body Sets', data: volumeData.map(d => d.lowerSets), backgroundColor: 'rgba(90, 90, 90, 0.6)' }] },
             options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Total Weekly Sets' } } } }
         });
-        
-        CLIENT_ID_INPUT.value = localStorage.getItem('googleClientId') || '';
-        CLIENT_ID_INPUT.onchange = () => localStorage.setItem('googleClientId', CLIENT_ID_INPUT.value);
         
         document.addEventListener('DOMContentLoaded', () => {
             loadLogs();
