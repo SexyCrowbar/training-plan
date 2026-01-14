@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warrior Training Log (Vanilla)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body { 
+            -webkit-tap-highlight-color: transparent; 
+            background-color: #f1f5f9; 
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        /* Animations */
+        .slide-in { animation: slideUp 0.3s ease-out; }
+        .fade-in { animation: fadeIn 0.2s ease-out; }
+        
+        @keyframes slideUp { 
+            from { transform: translateY(20px); opacity: 0; } 
+            to { transform: translateY(0); opacity: 1; } 
+        }
+        @keyframes fadeIn { 
+            from { opacity: 0; } 
+            to { opacity: 1; } 
+        }
+
+        /* Custom Scrollbar for hidden utility */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-slate-900">
+
+    <!-- Root Container -->
+    <div id="app" class="max-w-lg mx-auto min-h-screen relative pb-24">
+        <!-- Content will be injected here by JavaScript -->
+    </div>
+
+    <!-- Navigation Bar (Fixed) -->
+    <nav id="navbar" class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 flex justify-around p-3 pb-5 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] hidden">
+        <button onclick="router.switchTab('home')" class="nav-btn flex flex-col items-center text-slate-400" id="nav-home">
+            <i data-lucide="calendar" class="w-6 h-6"></i>
+            <span class="text-xs mt-1">План</span>
+        </button>
+        <button onclick="router.switchTab('history')" class="nav-btn flex flex-col items-center text-slate-400" id="nav-history">
+            <i data-lucide="history" class="w-6 h-6"></i>
+            <span class="text-xs mt-1">Історія</span>
+        </button>
+        <button onclick="router.switchTab('settings')" class="nav-btn flex flex-col items-center text-slate-400" id="nav-settings">
+            <i data-lucide="settings" class="w-6 h-6"></i>
+            <span class="text-xs mt-1">1ПМ</span>
+        </button>
+    </nav>
+
+    <script>
+        // --- DATA & CONSTANTS ---
+        const EXERCISE_DB = {
+            bench: { name: "Жим штанги лежачи", type: "bench" },
+            dips: { name: "Віджимання на брусах", type: "bodyweight" },
+            pullups: { name: "Підтягування (хват зверху)", type: "bodyweight" },
+            deadlift: { name: "Станова тяга", type: "deadlift" },
+            rows: { name: "Тяга штанги в нахилі", type: "aux" },
+            ring_pullups: { name: "Підтягування на кільцях", type: "bodyweight" },
+            squat: { name: "Присідання зі штангою", type: "squat" },
+            press: { name: "Армійський жим", type: "press" },
+            shrugs: { name: "Шраги", type: "aux" },
+            swings: { name: "Махи гірею 16кг", type: "daily" },
+            curls: { name: "EZ-bar біцепс", type: "daily" },
+            ring_dips: { name: "Віджимання на кільцях", type: "daily" },
+            sprints: { name: "Спринти / Біг", type: "cardio" }
+        };
+
+        const WEEKLY_PLAN = {
+            1: { title: "Сила: Жим + Верх", exercises: [
+                { id: 'bench', sets: 5, reps: 5, percent: 0.55 },
+                { id: 'dips', sets: 3, reps: 'MAX', percent: 0 },
+                { id: 'pullups', sets: 3, reps: '5-8', percent: 0 }
+            ]},
+            2: { title: "Активне Відновлення", exercises: [
+                { id: 'sprints', sets: 5, reps: '30м', percent: 0, note: "100% зусилля" }
+            ]},
+            3: { title: "Сила: Тяга + Спина", exercises: [
+                { id: 'deadlift', sets: 5, reps: 5, percent: 0.50 },
+                { id: 'rows', sets: 4, reps: 10, percent: 0, note: "RPE 6" },
+                { id: 'ring_pullups', sets: 3, reps: 'MAX', percent: 0 }
+            ]},
+            4: { title: "Активне Відновлення", exercises: [
+                { id: 'sprints', sets: 5, reps: '1хв', percent: 0, note: "Берпі або біг" }
+            ]},
+            5: { title: "Сила: Ноги + Плечі", exercises: [
+                { id: 'squat', sets: 5, reps: 5, percent: 0.50 },
+                { id: 'press', sets: 4, reps: 8, percent: 0.45 },
+                { id: 'shrugs', sets: 3, reps: 15, percent: 0 }
+            ]},
+            6: { title: "Кардіо / LISS", exercises: [
+                { id: 'sprints', sets: 1, reps: '30-40хв', percent: 0, note: "Пульс 130-140" }
+            ]},
+            0: { title: "Повний відпочинок", exercises: [] }
+        };
+
+        const DAILY_ROUTINE = [
+            { id: 'swings', target: '3x20' },
+            { id: 'curls', target: '3x12-15' },
+            { id: 'ring_dips', target: '3xMAX' }
+        ];
+
+        const DAYS_MAP = ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота"];
+
+        // --- STATE MANAGEMENT ---
+        const Store = {
+            data: {
+                oneRepMax: { squat: 100, bench: 80, deadlift: 120, press: 50 },
+                history: [],
+                daily: { date: new Date().toDateString(), checks: {} },
+                currentTab: 'home',
+                activeWorkout: null, // object when logging
+                editLogId: null // ID if editing
+            },
+
+            load() {
+                const s1rm = localStorage.getItem('warrior_1rm');
+                const shist = localStorage.getItem('warrior_history');
+                const sdaily = localStorage.getItem('warrior_daily');
+
+                if (s1rm) this.data.oneRepMax = JSON.parse(s1rm);
+                if (shist) this.data.history = JSON.parse(shist);
+                if (sdaily) {
+                    const parsed = JSON.parse(sdaily);
+                    if (parsed.date === new Date().toDateString()) {
+                        this.data.daily = parsed;
+                    }
+                }
+            },
+
+            save(key) {
+                if (key === '1rm') localStorage.setItem('warrior_1rm', JSON.stringify(this.data.oneRepMax));
+                if (key === 'history') localStorage.setItem('warrior_history', JSON.stringify(this.data.history));
+                if (key === 'daily') localStorage.setItem('warrior_daily', JSON.stringify(this.data.daily));
+            },
+
+            update1RM(type, val) {
+                this.data.oneRepMax[type] = Number(val);
+                this.save('1rm');
+            },
+
+            toggleDaily(id) {
+                const current = this.data.daily.checks[id] || false;
+                this.data.daily.checks[id] = !current;
+                this.save('daily');
+                renderHome(); // Re-render only home part
+            },
+
+            addLog(logData) {
+                if (this.data.editLogId) {
+                    // Update existing
+                    this.data.history = this.data.history.map(h => h.id === this.data.editLogId ? { ...h, ...logData } : h);
+                } else {
+                    // Add new
+                    this.data.history.unshift({ ...logData, id: Date.now() });
+                }
+                this.save('history');
+                this.data.activeWorkout = null;
+                this.data.editLogId = null;
+                router.switchTab('history');
+            },
+
+            deleteLog(id) {
+                if(confirm("Видалити запис?")) {
+                    this.data.history = this.data.history.filter(h => h.id !== id);
+                    this.save('history');
+                    renderHistory();
+                }
+            },
+
+            startEditLog(log) {
+                // Reconstruct simple workout object for the logger
+                const originalPlan = WEEKLY_PLAN[log.workoutId] || { title: log.title, exercises: [] };
+                
+                // Map log back to logger format
+                const restoredExercises = log.logs.map(l => {
+                    const config = originalPlan.exercises.find(e => e.id === l.exerciseId) || {};
+                    return {
+                        id: l.exerciseId,
+                        sets: l.sets.length,
+                        reps: config.reps || '-',
+                        percent: config.percent || 0,
+                        note: config.note,
+                        // Attach existing data to pre-fill inputs
+                        _existingData: l.sets 
+                    };
+                });
+
+                this.data.activeWorkout = {
+                    title: log.title,
+                    exercises: restoredExercises,
+                    _note: log.note,
+                    _date: log.date,
+                    _workoutId: log.workoutId
+                };
+                
+                this.data.editLogId = log.id;
+                router.renderLogger();
+            }
+        };
+
+        // --- ROUTING & RENDERING ---
+        const router = {
+            switchTab(tab) {
+                Store.data.currentTab = tab;
+                Store.data.activeWorkout = null; // Exit logger if switching tabs
+                
+                // Update Nav UI
+                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.replace('text-blue-600', 'text-slate-400'));
+                const activeBtn = document.getElementById(`nav-${tab}`);
+                if(activeBtn) activeBtn.classList.replace('text-slate-400', 'text-blue-600');
+                
+                // Render Content
+                const app = document.getElementById('app');
+                app.innerHTML = '';
+                
+                if (tab === 'home') renderHome();
+                else if (tab === 'history') renderHistory();
+                else if (tab === 'settings') renderSettings();
+                
+                lucide.createIcons();
+            },
+
+            openLogger(dayIndex) {
+                const plan = WEEKLY_PLAN[dayIndex];
+                if (!plan || plan.exercises.length === 0) return;
+
+                Store.data.activeWorkout = JSON.parse(JSON.stringify(plan)); // Deep copy
+                Store.data.activeWorkout._workoutId = dayIndex;
+                this.renderLogger();
+            },
+
+            renderLogger() {
+                const app = document.getElementById('app');
+                app.innerHTML = Templates.logger(Store.data.activeWorkout);
+                // Hide nav bar in logger mode
+                document.getElementById('navbar').classList.add('hidden');
+                lucide.createIcons();
+            },
+
+            closeLogger() {
+                Store.data.activeWorkout = null;
+                Store.data.editLogId = null;
+                // Show nav bar again
+                document.getElementById('navbar').classList.remove('hidden');
+                this.switchTab('home');
+            }
+        };
+
+        // --- TEMPLATES (HTML Generators) ---
+        const Templates = {
+            home() {
+                const today = new Date().getDay();
+                const todayWorkout = WEEKLY_PLAN[today];
+                const dateNum = new Date().getDate();
+
+                let dailyHTML = DAILY_ROUTINE.map(item => {
+                    const isChecked = Store.data.daily.checks[item.id];
+                    const exName = EXERCISE_DB[item.id].name;
+                    return `
+                    <div class="flex items-center justify-between p-1">
+                        <div class="flex items-center gap-3">
+                            <button onclick="Store.toggleDaily('${item.id}')" 
+                                class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isChecked ? 'bg-orange-500 border-orange-500 text-white' : 'border-slate-300'}">
+                                ${isChecked ? '<i data-lucide="check-circle" class="w-3.5 h-3.5"></i>' : ''}
+                            </button>
+                            <div>
+                                <p class="text-sm font-medium text-slate-700 leading-tight">${exName}</p>
+                                <p class="text-xs text-slate-400">${item.target}</p>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                let weeklyHTML = [1,2,3,4,5,6,0].map(day => {
+                    const isToday = day === today;
+                    return `
+                    <div class="p-4 rounded-xl flex items-center justify-between border ${isToday ? 'bg-white border-blue-200 shadow-sm' : 'bg-transparent border-transparent opacity-60'}">
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm font-bold w-20 ${isToday ? 'text-blue-600' : 'text-slate-400'}">${DAYS_MAP[day]}</span>
+                            <span class="text-sm font-medium text-slate-700">${WEEKLY_PLAN[day].title}</span>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                let mainCardBtn = '';
+                if (todayWorkout.exercises.length > 0) {
+                    mainCardBtn = `
+                    <button onclick="router.openLogger(${today})" 
+                        class="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 mt-4 shadow-lg shadow-blue-900/20">
+                        <i data-lucide="dumbbell" class="w-5 h-5"></i>
+                        Почати Тренування
+                    </button>`;
+                } else {
+                    mainCardBtn = `<div class="bg-slate-800 rounded-xl p-4 text-center text-slate-300 text-sm mt-4">Сьогодні день відпочинку.</div>`;
+                }
+
+                return `
+                <div class="pt-6 px-4 fade-in">
+                    <!-- Header -->
+                    <header class="mb-6 flex justify-between items-center">
+                        <div>
+                            <h1 class="text-2xl font-black text-slate-900">Warrior Plan</h1>
+                            <p class="text-slate-500 text-sm">Повернення до сили</p>
+                        </div>
+                        <div class="bg-white p-2 rounded-full shadow-sm border border-slate-100 w-10 h-10 flex items-center justify-center">
+                             <div class="w-full h-full rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                                ${dateNum}
+                            </div>
+                        </div>
+                    </header>
+
+                    <!-- Daily Section -->
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 mb-6">
+                        <h2 class="font-bold text-slate-800 mb-3 flex items-center gap-2">
+                            <i data-lucide="zap" class="text-orange-500 w-4 h-4"></i> Щоденний Мінімум
+                        </h2>
+                        <div class="space-y-3">${dailyHTML}</div>
+                    </div>
+
+                    <!-- Main Card -->
+                    <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-xl shadow-slate-200 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500 rounded-full blur-3xl opacity-20 -mr-10 -mt-10"></div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-slate-800 text-blue-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">${DAYS_MAP[today]}</span>
+                            </div>
+                            <h2 class="text-3xl font-black mb-1 leading-tight">${todayWorkout.title}</h2>
+                            <p class="text-slate-400 text-sm">${todayWorkout.exercises.length} вправ на сьогодні</p>
+                            ${mainCardBtn}
+                        </div>
+                    </div>
+
+                    <!-- Weekly List -->
+                    <div class="mt-8 mb-4">
+                        <h3 class="font-bold text-slate-900 mb-4 px-1">Розклад на тиждень</h3>
+                        <div class="space-y-2">${weeklyHTML}</div>
+                    </div>
+                </div>`;
+            },
+
+            history() {
+                if (Store.data.history.length === 0) {
+                    return `
+                    <div class="h-[80vh] flex flex-col items-center justify-center text-slate-400 fade-in">
+                        <i data-lucide="clipboard-list" class="w-12 h-12 mb-4 opacity-20"></i>
+                        <p>Історія тренувань порожня</p>
+                    </div>`;
+                }
+
+                const listHTML = Store.data.history.map(log => {
+                    const dateStr = new Date(log.date).toLocaleDateString('uk-UA', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+                    
+                    const exercisesHTML = log.logs.map(exLog => {
+                         const name = EXERCISE_DB[exLog.exerciseId]?.name || "Вправа";
+                         const doneSets = exLog.sets.filter(s => s.reps);
+                         if (doneSets.length === 0) return '';
+                         
+                         const badges = doneSets.map(s => 
+                             `<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-mono border border-slate-200">${s.weight ? s.weight + 'кг x ' : ''}${s.reps}</span>`
+                         ).join('');
+
+                         return `
+                         <div class="text-sm mt-2">
+                            <div class="font-medium text-slate-700 mb-1">${name}</div>
+                            <div class="flex flex-wrap gap-2">${badges}</div>
+                         </div>`;
+                    }).join('');
+
+                    return `
+                    <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 mb-4">
+                        <div class="flex justify-between items-start mb-3 border-b border-slate-50 pb-3">
+                            <div>
+                                <h3 class="font-bold text-slate-800">${log.title}</h3>
+                                <p class="text-xs text-slate-400 mt-0.5 capitalize">${dateStr}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick='Store.startEditLog(${JSON.stringify(log).replace(/'/g, "&#39;")})' class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                                <button onclick="Store.deleteLog(${log.id})" class="p-2 text-red-400 hover:bg-red-50 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                        <div>${exercisesHTML}</div>
+                        ${log.note ? `<div class="mt-4 text-xs text-slate-500 italic bg-slate-50 p-2 rounded-lg">"${log.note}"</div>` : ''}
+                    </div>`;
+                }).join('');
+
+                return `
+                <div class="pt-6 px-4 fade-in">
+                    <h1 class="text-2xl font-black text-slate-900 mb-6">Історія</h1>
+                    <div>${listHTML}</div>
+                </div>`;
+            },
+
+            settings() {
+                const inputs = [
+                    { id: 'squat', label: 'Присідання' },
+                    { id: 'bench', label: 'Жим лежачи' },
+                    { id: 'deadlift', label: 'Станова тяга' },
+                    { id: 'press', label: 'Армійський жим' },
+                ];
+
+                const inputsHTML = inputs.map(item => `
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">${item.label} (кг)</label>
+                        <input type="number" 
+                            value="${Store.data.oneRepMax[item.id]}" 
+                            oninput="Store.update1RM('${item.id}', this.value)"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    </div>
+                `).join('');
+
+                return `
+                <div class="pt-6 px-4 fade-in">
+                    <h1 class="text-2xl font-black text-slate-900 mb-6">Налаштування</h1>
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                        <h2 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i data-lucide="activity" class="text-blue-500 w-5 h-5"></i>
+                            Одноповторні Максимуми (1ПМ)
+                        </h2>
+                        <p class="text-sm text-slate-500 mb-6">Введіть результати. Робоча вага (50-55%) розраховується автоматично.</p>
+                        <div>${inputsHTML}</div>
+                    </div>
+                    <div class="mt-6 text-center text-xs text-slate-400">
+                        Дані зберігаються в пам'яті вашого браузера.
+                    </div>
+                </div>`;
+            },
+
+            logger(workout) {
+                const exercisesHTML = workout.exercises.map((ex, exIndex) => {
+                    const exInfo = EXERCISE_DB[ex.id];
+                    let targetW = 0;
+                    if (ex.percent > 0) {
+                        const max = Store.data.oneRepMax[exInfo.type] || 0;
+                        targetW = Math.round(max * ex.percent);
+                    }
+
+                    // Generate sets rows
+                    // Use existing data if editing, or create empty rows based on target sets
+                    const existingData = ex._existingData || [];
+                    let setsHTML = '';
+                    
+                    for(let i=0; i < ex.sets; i++) {
+                        const savedWeight = existingData[i]?.weight || '';
+                        const savedReps = existingData[i]?.reps || '';
+                        
+                        setsHTML += `
+                        <div class="grid grid-cols-6 gap-2 items-center mb-2 set-row" data-ex="${ex.id}">
+                            <div class="col-span-1 flex justify-center items-center">
+                                <div class="w-6 h-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold">${i+1}</div>
+                            </div>
+                            <div class="col-span-2">
+                                <input type="number" placeholder="${targetW || '-'}" value="${savedWeight}"
+                                    class="inp-weight w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-center font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div class="col-span-2">
+                                <input type="number" placeholder="${ex.reps}" value="${savedReps}"
+                                    class="inp-reps w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-center font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>`;
+                    }
+
+                    return `
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 mb-6 exercise-block" data-id="${ex.id}">
+                        <div class="mb-3">
+                            <h3 class="font-bold text-slate-800">${exInfo.name}</h3>
+                            <div class="text-xs text-slate-500 mt-1">
+                                Ціль: ${ex.sets} x ${ex.reps} 
+                                ${targetW ? `<span class="ml-2 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">${targetW} кг</span>` : ''}
+                                ${ex.note ? `<span class="block mt-1 text-orange-600">${ex.note}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-6 gap-2 text-xs text-slate-400 text-center mb-1">
+                            <div class="col-span-1">Сет</div>
+                            <div class="col-span-2">Вага</div>
+                            <div class="col-span-2">Повт</div>
+                        </div>
+                        <div>${setsHTML}</div>
+                    </div>`;
+                }).join('');
+
+                return `
+                <div class="bg-slate-50 min-h-screen z-40 slide-in pb-20">
+                    <div class="bg-white p-4 shadow-sm sticky top-0 flex justify-between items-center z-50">
+                        <button onclick="router.closeLogger()" class="text-slate-500 font-medium text-sm">Скасувати</button>
+                        <h2 class="font-bold text-lg truncate px-2">${workout.title}</h2>
+                        <button onclick="submitLogger()" class="bg-blue-600 text-white px-4 py-1.5 rounded-full font-medium flex items-center gap-1 text-sm shadow-md shadow-blue-200">
+                            <i data-lucide="save" class="w-4 h-4"></i> Зберегти
+                        </button>
+                    </div>
+
+                    <div class="p-4">
+                        ${exercisesHTML}
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Нотатки</label>
+                            <textarea id="logger-note" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" rows="3" placeholder="Самопочуття...">${workout._note || ''}</textarea>
+                        </div>
+                    </div>
+                </div>`;
+            }
+        };
+
+        // --- RENDER HELPERS ---
+        function renderHome() {
+            const app = document.getElementById('app');
+            app.innerHTML = Templates.home();
+            // Show nav
+            document.getElementById('navbar').classList.remove('hidden');
+        }
+
+        function renderHistory() {
+            const app = document.getElementById('app');
+            app.innerHTML = Templates.history();
+            // Show nav
+            document.getElementById('navbar').classList.remove('hidden');
+        }
+
+        function renderSettings() {
+            const app = document.getElementById('app');
+            app.innerHTML = Templates.settings();
+            // Show nav
+            document.getElementById('navbar').classList.remove('hidden');
+        }
+
+        // --- SUBMIT LOGIC ---
+        window.submitLogger = function() {
+            // Collect data from DOM inputs manually
+            const blocks = document.querySelectorAll('.exercise-block');
+            const logs = [];
+
+            blocks.forEach(block => {
+                const exId = block.dataset.id;
+                const setRows = block.querySelectorAll('.set-row');
+                const setsData = [];
+                
+                setRows.forEach(row => {
+                    const w = row.querySelector('.inp-weight').value;
+                    const r = row.querySelector('.inp-reps').value;
+                    setsData.push({ weight: w, reps: r });
+                });
+
+                logs.push({
+                    exerciseId: exId,
+                    sets: setsData
+                });
+            });
+
+            const note = document.getElementById('logger-note').value;
+            const workout = Store.data.activeWorkout;
+
+            const finalLog = {
+                date: workout._date || new Date().toISOString(),
+                workoutId: workout._workoutId,
+                title: workout.title,
+                logs: logs,
+                note: note
+            };
+
+            Store.addLog(finalLog);
+            router.closeLogger();
+        };
+
+        // --- INITIALIZATION ---
+        (function init() {
+            Store.load();
+            router.switchTab('home');
+        })();
+
+    </script>
+</body>
+</html>
