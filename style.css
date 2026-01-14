@@ -318,114 +318,90 @@ input:focus {
     height: 32px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--card-border);
+    /* Grey/Empty */
+    border: 2px solid var(--card-border);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.75rem;
     font-weight: bold;
     color: var(--text-secondary);
+    transition: all 0.3s ease;
 }
 
+/* Gold Border = Iron Day Complete */
 .heatmap-bubble.done-iron {
-    background: var(--glow-iron);
+    background: rgba(251, 191, 36, 0.1);
     border-color: var(--accent-iron);
     color: var(--accent-iron);
-    box-shadow: 0 0 8px var(--glow-iron);
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
 }
 
+/* Cyan Glow = Body Day Complete */
 .heatmap-bubble.done-body {
-    background: var(--glow-body);
+    background: rgba(34, 211, 238, 0.1);
     border-color: var(--accent-body);
     color: var(--accent-body);
-    box-shadow: 0 0 8px var(--glow-body);
+    box-shadow: 0 0 15px var(--accent-body);
+    /* Strong Glow */
 }
+
+/* Rest/Missed is default grey above */
 
 .heatmap-bubble.current {
     border-color: var(--text-primary);
     background: rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
+    transform: scale(1.1);
 }
 
-/* Modal Utility (Plate Calculator) */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
-    z-index: 200;
+/* Stats & Charts */
+.chart-container {
+    height: 200px;
+    width: 100%;
+    margin-top: 1rem;
+    position: relative;
+    border-left: 1px solid var(--card-border);
+    border-bottom: 1px solid var(--card-border);
+}
+
+.chart-line {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 4px var(--primary-glow));
+}
+
+.chart-dot {
+    fill: var(--bg-color);
+    stroke: var(--primary);
+    stroke-width: 2;
+    r: 4;
+}
+
+.knob-container {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 1rem;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-}
-
-.modal-overlay.open {
-    opacity: 1;
-    pointer-events: all;
-}
-
-.plate-stack {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    margin: 1.5rem 0;
-    height: 60px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 0 1rem;
     overflow-x: auto;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
 }
 
-.plate {
-    height: 100%;
-    /* Default */
-    width: 12px;
-    border-radius: 2px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+.knob {
+    white-space: nowrap;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid transparent;
 }
 
-.plate[data-weight="25"] {
-    background: #ef4444;
-    height: 50px;
-    width: 16px;
-}
-
-.plate[data-weight="20"] {
-    background: #3b82f6;
-    height: 50px;
-    width: 16px;
-}
-
-.plate[data-weight="15"] {
-    background: #eab308;
-    height: 46px;
-}
-
-.plate[data-weight="10"] {
-    background: #22c55e;
-    height: 40px;
-}
-
-.plate[data-weight="5"] {
-    background: #fff;
-    height: 32px;
-}
-
-.plate[data-weight="2.5"] {
-    background: #000;
-    border-color: #fff;
-    height: 26px;
-}
-
-.plate[data-weight="1.25"] {
-    background: #94a3b8;
-    height: 22px;
+.knob.active {
+    background: var(--primary-glow);
+    color: var(--primary);
+    border-color: var(--primary);
 }
