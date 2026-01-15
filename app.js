@@ -639,9 +639,14 @@ const Session = {
                     });
 
                     // PR Check Logic
-                    if (catKey && weight > 0 && reps > 0) {
-                        const e1rm = weight * (1 + reps / 30);
-                        if (e1rm > sessionMax1RM) sessionMax1RM = e1rm;
+                    const mode = Stats.getDisplayMode(catKey);
+                    if (catKey) {
+                        if (mode === 'load' && weight > 0 && reps > 0) {
+                            const e1rm = weight * (1 + reps / 30);
+                            if (e1rm > sessionMax1RM) sessionMax1RM = e1rm;
+                        } else if (mode === 'reps' && reps > 0) {
+                            if (reps > sessionMax1RM) sessionMax1RM = reps;
+                        }
                     }
                 }
             }
@@ -649,11 +654,16 @@ const Session = {
             // Did we beat previous best?
             if (catKey && sessionMax1RM > 0) {
                 const currentRecord = Stats.getPersonalRecord(catKey);
-                // Simple hygiene: require at least 1kg improvement and realistic weight > 20kg
-                if (sessionMax1RM > currentRecord && sessionMax1RM > 20) {
+                // Simple hygiene: require at least 1 unit improvement
+                const minThreshold = Stats.getDisplayMode(catKey) === 'load' ? 20 : 5; // 20kg or 5 reps min to count
+
+                if (sessionMax1RM > currentRecord && sessionMax1RM > minThreshold) {
                     // Check if we already added this category (multi-exercise days)
                     if (!newPRs.find(p => p.cat === catKey)) {
-                        const labels = { 'sq': 'Squat', 'bp': 'Bench', 'dl': 'Deadlift', 'ohp': 'Press' };
+                        const labels = {
+                            'sq': 'Squat', 'bp': 'Bench', 'dl': 'Deadlift', 'ohp': 'Press',
+                            'pullup': 'Pull-Up', 'dips': 'Dips', 'pushups': 'Push-Ups'
+                        };
                         newPRs.push({ cat: catKey, label: labels[catKey], value: Math.round(sessionMax1RM) });
                     }
                 }
