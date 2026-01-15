@@ -88,8 +88,9 @@ const State = {
     history: [],
 
     init() {
-        const storedDay = localStorage.getItem('wp_day');
-        if (storedDay) this.currentDay = parseInt(storedDay);
+        // Auto-detect day (Mon=1 ... Sun=7)
+        const day = new Date().getDay();
+        this.currentDay = day === 0 ? 7 : day;
 
         const storedHistory = localStorage.getItem('wp_history');
         if (storedHistory) this.history = JSON.parse(storedHistory);
@@ -98,15 +99,14 @@ const State = {
     },
 
     setDay(day) {
+        // Debug/Manual override only
         this.currentDay = day;
-        localStorage.setItem('wp_day', day);
         this.updateTheme();
         Render.home();
     },
 
     nextDay() {
-        this.currentDay = this.currentDay < 7 ? this.currentDay + 1 : 1;
-        this.setDay(this.currentDay);
+        // No-op in auto mode
     },
 
     updateTheme() {
@@ -128,6 +128,13 @@ const State = {
         this.history.splice(index, 1);
         localStorage.setItem('wp_history', JSON.stringify(this.history));
         Render.history();
+    },
+
+    isTodayComplete() {
+        if (this.history.length === 0) return false;
+        const lastLog = this.history[0];
+        const today = new Date().toDateString();
+        return new Date(lastLog.date).toDateString() === today;
     }
 };
 
@@ -142,17 +149,20 @@ const Utils = {
     // Check if a specific cycle day is completed in history (basic logic: assumes ideal week)
     // For a real app, you'd match dates. Here we just mock visually based on current day progression.
     getDayStatus(dayIdx) {
-        // Simple logic for the heatmap: 
-        // If dayIdx < currentDay, it's done. 
-        // If dayIdx == currentDay, it's current.
-        // We use the PLAN to determine color.
+        // Advanced: Check history for this week
+        // Find log where dayId == dayIdx AND date is within this week?
+        // Simpler: Just rely on Current Day
 
-        if (dayIdx < State.currentDay) {
-            return PLAN[dayIdx].type === 'iron' ? 'done-iron' : (PLAN[dayIdx].type === 'body' ? 'done-body' : 'done-rest');
-        } else if (dayIdx === State.currentDay) {
-            return 'current';
+        if (dayIdx === State.currentDay) {
+            return State.isTodayComplete() ? (PLAN[dayIdx].type === 'iron' ? 'done-iron' : 'done-body') : 'current';
         }
-        return '';
+
+        // Past days in the week... complicated without exact week boundaries.
+        // We'll stick to: If < currentDay, assume done? No, that was the old way.
+        // New way: We just highlight Today. The heatmap is becoming less useful without calendar logic.
+        // Let's at least highlight Today properly.
+
+        return dayIdx === State.currentDay ? 'current' : '';
     }
 };
 
@@ -164,15 +174,86 @@ const Render = {
         State.editIndex = null; // Clear edit state on home
         const dayData = PLAN[State.currentDay];
         const isRest = dayData.type === 'rest';
+        const isComplete = State.isTodayComplete();
 
         // Generate Heatmap
         let heatmapHTML = `<div class="heatmap-container fade-in">`;
         for (let i = 1; i <= 7; i++) {
-            const statusClass = Utils.getDayStatus(i);
+            let statusClass = '';
+            if (i === State.currentDay) {
+                statusClass = isComplete ? (PLAN[i].type === 'iron' ? 'done-iron' : 'done-body') : 'current';
+            }
             const letter = WEEKLY_MAP[i - 1];
             heatmapHTML += `<div class="heatmap-bubble ${statusClass}">${letter}</div>`;
         }
         heatmapHTML += `</div>`;
+
+        let content = '';
+
+        if (isComplete) {
+            content = `
+                <div class="card fade-in slide-up text-center py-12">
+                     <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500/20 text-green-400 mb-6">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                     </div>
+                     <h2 class="text-primary mb-2">Session Complete</h2>
+                     <p class="text-secondary">Good work today. Recover and prepare for tomorrow.</p>
+                </div>
+                
+                <div class="mt-8 fade-in">
+                    <h3 class="text-secondary text-sm mb-4">Post-Workout</h3>
+                    <div class="card p-4">
+                        <ul class="text-sm list-disc pl-4 space-y-2 text-secondary">
+                            <li>Hydrate immediately (500ml+).</li>
+                            <li>Protein within 2 hours.</li>
+                            <li>Sleep 7-8 hours tonight.</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        } else {
+            content = `
+                <div class="card fade-in slide-up">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-primary mb-1">${dayData.name}</h2>
+                            <p class="text-secondary text-sm uppercase tracking-wide">${dayData.tag}</p>
+                        </div>
+                    </div>
+                    
+                    ${isRest ?
+                    `<p class="mb-6 text-secondary">Mandatory rest. Light walking or stretching only. No heavy lifting.</p>` :
+                    `<div class="mb-6 space-y-2">
+                            ${dayData.exercises.map(ex => `
+                                <div class="flex items-center text-sm text-secondary">
+                                    <span class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs mr-3">${ex.sets}</span>
+                                    <span>${ex.name}</span>
+                                </div>
+                            `).join('')}
+                        </div>`
+                }
+
+                    ${isRest ?
+                    `<button class="btn btn-ghost cursor-default">Rest Day</button>` :
+                    `<button onclick="Render.workout()" class="btn btn-primary">Start Session</button>`
+                }
+                </div>
+                
+                ${!isRest ?
+                    `<div class="mt-8 fade-in">
+                    <h3 class="text-secondary text-sm mb-4">Pro Tips</h3>
+                    <div class="card p-4">
+                        <ul class="text-sm list-disc pl-4 space-y-2 text-secondary">
+                            ${dayData.type === 'iron' ?
+                        `<li>Rest <strong>3-5 minutes</strong> between sets.</li><li>Leave 1-2 reps in the tank (RPE 8-9).</li><li>Focus on TENSION, not failing.</li>` :
+                        `<li>Rest <strong>60-90 seconds</strong> only.</li><li>Go to technical failure.</li><li>Focus on SWEAT.</li>`
+                    }
+                        </ul>
+                    </div>
+                </div>` : ''
+                }
+            `;
+        }
 
         let html = `
             <header class="fade-in">
@@ -184,46 +265,7 @@ const Render = {
                     </div>
                 </div>
             </header>
-
-            <div class="card fade-in slide-up">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <h2 class="text-primary mb-1">${dayData.name}</h2>
-                        <p class="text-secondary text-sm uppercase tracking-wide">${dayData.tag}</p>
-                    </div>
-                </div>
-                
-                ${isRest ?
-                `<p class="mb-6 text-secondary">Mandatory rest. Light walking or stretching only. No heavy lifting.</p>` :
-                `<div class="mb-6 space-y-2">
-                        ${dayData.exercises.map(ex => `
-                            <div class="flex items-center text-sm text-secondary">
-                                <span class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs mr-3">${ex.sets}</span>
-                                <span>${ex.name}</span>
-                            </div>
-                        `).join('')}
-                    </div>`
-            }
-
-                ${isRest ?
-                `<button onclick="State.nextDay()" class="btn btn-primary">Complete Rest Day</button>` :
-                `<button onclick="Render.workout()" class="btn btn-primary">Start Session</button>`
-            }
-            </div>
-            
-            ${!isRest ?
-                `<div class="mt-8 fade-in">
-                <h3 class="text-secondary text-sm mb-4">Pro Tips</h3>
-                <div class="card p-4">
-                    <ul class="text-sm list-disc pl-4 space-y-2 text-secondary">
-                        ${dayData.type === 'iron' ?
-                    `<li>Rest <strong>3-5 minutes</strong> between sets.</li><li>Leave 1-2 reps in the tank (RPE 8-9).</li><li>Focus on TENSION, not failing.</li>` :
-                    `<li>Rest <strong>60-90 seconds</strong> only.</li><li>Go to technical failure.</li><li>Focus on SWEAT.</li>`
-                }
-                    </ul>
-                </div>
-            </div>` : ''
-            }
+            ${content}
         `;
 
         app.innerHTML = html;
@@ -584,8 +626,8 @@ const Session = {
             Render.history();
         } else {
             State.saveLog(log);
-            State.nextDay();
-            Render.home();
+            // State.nextDay(); // REPLACED: Auto-weekday doesn't advance cursor
+            Render.home(); // Re-render home to show 'Complete' state
         }
 
         Timer.stop();
