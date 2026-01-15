@@ -513,8 +513,8 @@ const Render = {
  */
 
 const Stats = {
-    // Return array of { date, value } for a given key string (sq, bp, dl, ohp)
-    getProgress(key) {
+    // Return array of { date, value }
+    getProgress(key, mode = 'load') {
         const history = State.history;
         const data = [];
 
@@ -523,33 +523,40 @@ const Stats = {
             'sq': ['sq_zerch', 'sq_zerch_vol'],
             'bp': ['bp', 'bp_vol'],
             'dl': ['dl_zerch'],
-            'ohp': ['ohp']
+            'ohp': ['ohp'],
+            'pullup': ['pullup', 'chins'],
+            'dips': ['dips'],
+            'pushups': ['pushups']
         };
         const targets = map[key];
+        if (!targets) return [];
 
         // Process history chronological (must reverse first as history is new->old)
         [...history].reverse().forEach(log => {
-            // Old logs might not have 'exercises' array
             if (!log.exercises) return;
 
-            let max1RM = 0;
+            let maxVal = 0;
 
             log.exercises.forEach(ex => {
                 if (targets.includes(ex.id)) {
-                    // Calculate 1RM for this set
-                    // We need to parse weight/reps
-                    const w = parseFloat(ex.weight) || 0;
-                    const r = parseFloat(ex.reps) || 0;
-
-                    if (w > 0 && r > 0) {
-                        const e1rm = w * (1 + r / 30);
-                        if (e1rm > max1RM) max1RM = e1rm;
+                    if (mode === 'load') {
+                        // Calculate 1RM
+                        const w = parseFloat(ex.weight) || 0;
+                        const r = parseFloat(ex.reps) || 0;
+                        if (w > 0 && r > 0) {
+                            const e1rm = w * (1 + r / 30);
+                            if (e1rm > maxVal) maxVal = e1rm;
+                        }
+                    } else if (mode === 'reps') {
+                        // Max Reps
+                        const r = parseFloat(ex.reps) || 0;
+                        if (r > maxVal) maxVal = r;
                     }
                 }
             });
 
-            if (max1RM > 0) {
-                data.push({ date: log.date, value: max1RM });
+            if (maxVal > 0) {
+                data.push({ date: log.date, value: maxVal });
             }
         });
 
@@ -562,12 +569,21 @@ const Stats = {
         if (['bp', 'bp_vol'].includes(exId)) return 'bp';
         if (['dl_zerch'].includes(exId)) return 'dl';
         if (['ohp'].includes(exId)) return 'ohp';
+        if (['pullup', 'chins'].includes(exId)) return 'pullup';
+        if (['dips'].includes(exId)) return 'dips';
+        if (['pushups'].includes(exId)) return 'pushups';
         return null;
     },
 
-    // Get max previous record (excluding today if today is not saved yet, which it isn't during check)
+    getDisplayMode(catKey) {
+        if (['pullup', 'dips', 'pushups'].includes(catKey)) return 'reps';
+        return 'load';
+    },
+
+    // Get max previous record 
     getPersonalRecord(catKey) {
-        const data = this.getProgress(catKey);
+        const mode = this.getDisplayMode(catKey);
+        const data = this.getProgress(catKey, mode);
         if (data.length === 0) return 0;
         return Math.max(...data.map(d => d.value));
     }
