@@ -171,6 +171,7 @@ const Utils = {
  */
 const Render = {
     home() {
+        ScreenLock.release();
         State.editIndex = null; // Clear edit state on home
         const dayData = PLAN[State.currentDay];
         const isRest = dayData.type === 'rest';
@@ -273,6 +274,7 @@ const Render = {
     },
 
     workout(prefillSets = null) {
+        ScreenLock.request();
         const dayData = PLAN[State.currentDay];
         const isEditing = State.editIndex !== null;
 
@@ -462,14 +464,11 @@ const Render = {
         // Inject Stats button if missing (runtime fix)
         const nav = document.querySelector('.nav-bar');
         if (nav && !nav.querySelector('[data-tab="stats"]')) {
-            // Rebuild nav to be safe or append? Appending is easier.
-            // But layout "space-around" handles it.
             const statsBtn = document.createElement('button');
             statsBtn.className = 'nav-item';
             statsBtn.dataset.tab = 'stats';
             statsBtn.onclick = () => Render.stats();
             statsBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span>Stats</span>`;
-            // Insert before History
             const historyBtn = nav.querySelector('[data-tab="history"]');
             nav.insertBefore(statsBtn, historyBtn);
         }
@@ -478,6 +477,34 @@ const Render = {
             el.classList.remove('active');
             if (el.dataset.tab === activeTab) el.classList.add('active');
         });
+    },
+
+    celebratePR(records) {
+        // Create full screen overlay
+        const rec = records[0]; // Just show the first one if multiple for simplicity/focus
+
+        let html = `
+            <div class="pr-overlay" onclick="Render.home()">
+                <div class="pr-content">
+                    <span class="pr-badge">NEW RECORD</span>
+                    <h1 class="pr-title">${rec.label}</h1>
+                    <div class="pr-value">${rec.value} KG</div>
+                    <p class="text-secondary text-sm mt-4">Estimated 1 Rep Max</p>
+                    <button class="btn btn-primary mt-8 w-48 mx-auto">AWESOME</button>
+                </div>
+            </div>
+        `;
+
+        // Add minimal confetti logic
+        for (let i = 0; i < 30; i++) {
+            const left = Math.random() * 100;
+            const delay = Math.random() * 2;
+            const dur = 2 + Math.random() * 3;
+            html += `<div class="confetti" style="left:${left}%; animation-delay:${delay}s; animation-duration:${dur}s"></div>`;
+        }
+
+        app.innerHTML += html; // Append to top
+        Utils.vibrate([100, 100, 100, 100, 200]);
     }
 };
 
@@ -527,6 +554,22 @@ const Stats = {
         });
 
         return data;
+    },
+
+    // Identify category for exercise ID
+    getCategory(exId) {
+        if (['sq_zerch', 'sq_zerch_vol'].includes(exId)) return 'sq';
+        if (['bp', 'bp_vol'].includes(exId)) return 'bp';
+        if (['dl_zerch'].includes(exId)) return 'dl';
+        if (['ohp'].includes(exId)) return 'ohp';
+        return null;
+    },
+
+    // Get max previous record (excluding today if today is not saved yet, which it isn't during check)
+    getPersonalRecord(catKey) {
+        const data = this.getProgress(catKey);
+        if (data.length === 0) return 0;
+        return Math.max(...data.map(d => d.value));
     }
 };
 
@@ -558,13 +601,6 @@ const Session = {
         State.editIndex = index;
         State.currentDay = log.dayId;
         State.updateTheme();
-
-        // Need to fully restore values if we want 'Editing' to be useful
-        // But the previous implementation just did completedSets.
-        // For enhanced logging, we need to try and fill inputs if they exist in the log.
-        // This is complex for legacy logs vs new logs.
-        // For now, we support the Context switch, user re-enters data.
-
         Render.workout(log.completedSets);
     },
 
@@ -575,37 +611,51 @@ const Session = {
         // Scrape Data
         const dayData = PLAN[State.currentDay];
         const capturedExercises = [];
-
-        // Iterate physical DOM cards to get inputs
-        // Note: Relies on DOM structure remaining stable
-        // card -> space-y-3 -> set-grid
-
-        // We can map over dayData.exercises and query by indices
         let totalSets = 0;
+        const newPRs = []; // Store { label: "Squat", value: 100 }
 
         dayData.exercises.forEach((ex, exIdx) => {
-            // Get all set grids for this exercise
+            const catKey = Stats.getCategory(ex.id);
+            let sessionMax1RM = 0;
+
             for (let setIdx = 0; setIdx < ex.sets; setIdx++) {
                 const checkEl = document.getElementById(`check-${exIdx}-${setIdx}`);
                 const isChecked = checkEl.classList.contains('checked');
 
                 if (isChecked) totalSets++;
 
-                // Find inputs: they are siblings to the check-circle
-                // set-grid children: [check-circle, input(weight), input(reps)]
                 const parent = checkEl.parentElement;
                 const inputs = parent.querySelectorAll('input');
-                const weight = inputs[0].value;
-                const reps = inputs[1].value;
+                const weight = parseFloat(inputs[0].value) || 0;
+                const reps = parseFloat(inputs[1].value) || 0;
 
-                if (isChecked || weight || reps) { // Save line if anything happened
+                if (isChecked || weight || reps) {
                     capturedExercises.push({
                         id: ex.id,
                         set: setIdx + 1,
-                        weight: weight,
-                        reps: reps,
+                        weight: inputs[0].value,
+                        reps: inputs[1].value,
                         completed: isChecked
                     });
+
+                    // PR Check Logic
+                    if (catKey && weight > 0 && reps > 0) {
+                        const e1rm = weight * (1 + reps / 30);
+                        if (e1rm > sessionMax1RM) sessionMax1RM = e1rm;
+                    }
+                }
+            }
+
+            // Did we beat previous best?
+            if (catKey && sessionMax1RM > 0) {
+                const currentRecord = Stats.getPersonalRecord(catKey);
+                // Simple hygiene: require at least 1kg improvement and realistic weight > 20kg
+                if (sessionMax1RM > currentRecord && sessionMax1RM > 20) {
+                    // Check if we already added this category (multi-exercise days)
+                    if (!newPRs.find(p => p.cat === catKey)) {
+                        const labels = { 'sq': 'Squat', 'bp': 'Bench', 'dl': 'Deadlift', 'ohp': 'Press' };
+                        newPRs.push({ cat: catKey, label: labels[catKey], value: Math.round(sessionMax1RM) });
+                    }
                 }
             }
         });
@@ -615,7 +665,7 @@ const Session = {
             dayId: State.currentDay,
             name: dayData.name,
             completedSets: totalSets,
-            exercises: capturedExercises // New Data Field
+            exercises: capturedExercises
         };
 
         if (isEditing) {
@@ -627,11 +677,17 @@ const Session = {
         } else {
             State.saveLog(log);
             // State.nextDay(); // REPLACED: Auto-weekday doesn't advance cursor
-            Render.home(); // Re-render home to show 'Complete' state
+
+            if (newPRs.length > 0) {
+                Render.celebratePR(newPRs); // Hijack the flow
+            } else {
+                Render.home();
+            }
         }
 
         Timer.stop();
         Utils.vibrate([100, 50, 100]);
+        ScreenLock.release(); // Ensure release
     }
 };
 
@@ -672,6 +728,39 @@ const Timer = {
         if (display) display.classList.add('hidden');
     }
 };
+
+const ScreenLock = {
+    wakeLock: null,
+
+    async request() {
+        if ('wakeLock' in navigator) {
+            try {
+                this.wakeLock = await navigator.wakeLock.request('screen');
+                this.wakeLock.addEventListener('release', () => {
+                    console.log('Wake Lock released');
+                });
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+            }
+        }
+    },
+
+    release() {
+        if (this.wakeLock !== null) {
+            this.wakeLock.release()
+                .then(() => {
+                    this.wakeLock = null;
+                });
+        }
+    }
+};
+
+// Handle visibility change to re-acquire lock
+document.addEventListener('visibilitychange', async () => {
+    if (ScreenLock.wakeLock !== null && document.visibilityState === 'visible') {
+        await ScreenLock.request();
+    }
+});
 
 // Start
 State.init();
