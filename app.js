@@ -5,62 +5,175 @@ const app = document.getElementById('app');
 
 /**
  * CONSTANTS & DATA
+ * Each day has `blocks` — independently trackable sessions.
  */
 const PLAN = {
     1: {
         type: 'iron',
         name: 'Day 1: Horizontal Push',
         tag: 'Arms & Shoulders',
-        exercises: [
-            { id: 'warmup', name: 'Desk-to-Barbell Warmup', sets: 1, reps: '3m', rest: 0, note: 'Block 0: Arm circles, twists, deep squats.' },
-            { id: 'bp', name: 'Barbell Bench Press', sets: 3, reps: '3-5', rest: 180, note: 'Block 1 (Power): 60-70% max effort.' },
-            { id: 'dips', name: 'Parallel Bar Dips', sets: 3, reps: 'AMRAP', rest: 60, note: 'Block 2 (Hypertrophy): Superset 1.' },
-            { id: 'skullcrushers', name: 'EZ-Bar Skullcrushers', sets: 3, reps: '8-12', rest: 90, note: 'Block 2: Superset 2.' },
-            { id: 'kb_swing', name: 'KB Swings (16kg)', sets: 1, reps: '10m', rest: 0, note: 'Block 3 (Endurance): EMOM 15 reps/min.' }
+        blocks: [
+            {
+                id: 'warmup',
+                name: 'Morning Prep',
+                icon: '🌅',
+                exercises: [
+                    { id: 'warmup', name: 'Desk-to-Barbell Warmup', sets: 1, reps: '3m', rest: 0, note: 'Arm circles, twists, deep squats.' }
+                ]
+            },
+            {
+                id: 'power',
+                name: 'Morning Power',
+                icon: '⚡',
+                exercises: [
+                    { id: 'bp', name: 'Barbell Bench Press', sets: 3, reps: '3-5', rest: 180, note: '60-70% max effort.' }
+                ]
+            },
+            {
+                id: 'hypertrophy',
+                name: 'Afternoon Hypertrophy',
+                icon: '💪',
+                exercises: [
+                    { id: 'dips', name: 'Parallel Bar Dips', sets: 3, reps: 'AMRAP', rest: 60, note: 'Superset 1.' },
+                    { id: 'skullcrushers', name: 'EZ-Bar Skullcrushers', sets: 3, reps: '8-12', rest: 90, note: 'Superset 2.' }
+                ]
+            },
+            {
+                id: 'endurance',
+                name: 'Evening Endurance',
+                icon: '🔥',
+                exercises: [
+                    { id: 'kb_swing', name: 'KB Swings (16kg)', sets: 1, reps: '10m', rest: 0, note: 'EMOM 15 reps/min.' }
+                ]
+            }
         ]
     },
     2: {
         type: 'body',
         name: 'Day 2: Vertical Pull',
         tag: 'Bicep Focus',
-        exercises: [
-            { id: 'warmup', name: 'Desk-to-Barbell Warmup', sets: 1, reps: '3m', rest: 0, note: 'Block 0: Dead hangs, scap pull-ups.' },
-            { id: 'pullup_weighted', name: 'Weighted Pull-Ups', sets: 3, reps: '3-5', rest: 180, note: 'Block 1 (Power): Use dip belt.' },
-            { id: 'ez_curl', name: 'EZ-Bar Curls', sets: 3, reps: '8-12', rest: 60, note: 'Block 2 (Hypertrophy): Superset 1.' },
-            { id: 'facepull', name: 'Ring Face Pulls', sets: 3, reps: '12-15', rest: 90, note: 'Block 2: Superset 2 (Rear delts).' },
-            { id: 'amrap_circuit', name: 'Bodyweight AMRAP', sets: 1, reps: '10m', rest: 0, note: 'Block 3 (Endurance): 5 PU, 10 Push, 15 Squat.' }
+        blocks: [
+            {
+                id: 'warmup',
+                name: 'Morning Prep',
+                icon: '🌅',
+                exercises: [
+                    { id: 'warmup', name: 'Desk-to-Barbell Warmup', sets: 1, reps: '3m', rest: 0, note: 'Dead hangs, scap pull-ups.' }
+                ]
+            },
+            {
+                id: 'power',
+                name: 'Morning Power',
+                icon: '⚡',
+                exercises: [
+                    { id: 'pullup_weighted', name: 'Weighted Pull-Ups', sets: 3, reps: '3-5', rest: 180, note: 'Use dip belt.' }
+                ]
+            },
+            {
+                id: 'hypertrophy',
+                name: 'Afternoon Hypertrophy',
+                icon: '💪',
+                exercises: [
+                    { id: 'ez_curl', name: 'EZ-Bar Curls', sets: 3, reps: '8-12', rest: 60, note: 'Superset 1.' },
+                    { id: 'facepull', name: 'Ring Face Pulls', sets: 3, reps: '12-15', rest: 90, note: 'Superset 2 (Rear delts).' }
+                ]
+            },
+            {
+                id: 'endurance',
+                name: 'Evening Endurance',
+                icon: '🔥',
+                exercises: [
+                    { id: 'amrap_circuit', name: 'Bodyweight AMRAP', sets: 1, reps: '10m', rest: 0, note: '5 PU, 10 Push, 15 Squat.' }
+                ]
+            }
         ]
     },
     3: {
         type: 'iron',
         name: 'Day 3: Heavy Legs',
         tag: 'Core Stability',
-        exercises: [
-            { id: 'warmup', name: 'Desk-to-Barbell Warmup', sets: 1, reps: '3m', rest: 0, note: 'Block 0: Hip openers, Cossack squats.' },
-            { id: 'sq_zerch', name: 'Barbell Zercher Squats', sets: 3, reps: '3-5', rest: 180, note: 'Block 1 (Power): Core power & leg drive.' },
-            { id: 'ohp', name: 'Barbell Overhead Press', sets: 3, reps: '8-10', rest: 90, note: 'Block 2 (Hypertrophy): Strict standing.' },
-            { id: 'ez_rev_curl', name: 'EZ-Bar Reverse Curls', sets: 3, reps: '10-12', rest: 90, note: 'Block 2 (Hypertrophy): Target brachialis.' },
-            { id: 'goblet_squat', name: 'KB Goblet Squats', sets: 3, reps: '15-20', rest: 0, note: 'Block 3 (Endurance): Superset w/ Planks.' },
-            { id: 'plank', name: 'Planks', sets: 3, reps: '60s', rest: 60, note: 'Block 3: Superset.' }
+        blocks: [
+            {
+                id: 'warmup',
+                name: 'Morning Prep',
+                icon: '🌅',
+                exercises: [
+                    { id: 'warmup', name: 'Desk-to-Barbell Warmup', sets: 1, reps: '3m', rest: 0, note: 'Hip openers, Cossack squats.' }
+                ]
+            },
+            {
+                id: 'power',
+                name: 'Morning Power',
+                icon: '⚡',
+                exercises: [
+                    { id: 'sq_zerch', name: 'Barbell Zercher Squats', sets: 3, reps: '3-5', rest: 180, note: 'Core power & leg drive.' }
+                ]
+            },
+            {
+                id: 'hypertrophy',
+                name: 'Afternoon Hypertrophy',
+                icon: '💪',
+                exercises: [
+                    { id: 'ohp', name: 'Barbell Overhead Press', sets: 3, reps: '8-10', rest: 90, note: 'Strict standing.' },
+                    { id: 'ez_rev_curl', name: 'EZ-Bar Reverse Curls', sets: 3, reps: '10-12', rest: 90, note: 'Target brachialis.' }
+                ]
+            },
+            {
+                id: 'endurance',
+                name: 'Evening Endurance',
+                icon: '🔥',
+                exercises: [
+                    { id: 'goblet_squat', name: 'KB Goblet Squats', sets: 3, reps: '15-20', rest: 0, note: 'Superset w/ Planks.' },
+                    { id: 'plank', name: 'Planks', sets: 3, reps: '60s', rest: 60, note: 'Superset.' }
+                ]
+            }
         ]
     },
     4: {
         type: 'body',
         name: 'Day 4: Arm Annihilation',
         tag: 'Functional Flow',
-        exercises: [
-            { id: 'warmup', name: 'Desk-to-Barbell Warmup', sets: 1, reps: '3m', rest: 0, note: 'Block 0: Wrist circles, shoulder dislocates.' },
-            { id: 'cg_bench', name: 'Close-Grip Bench', sets: 3, reps: '3-5', rest: 180, note: 'Block 1 (Power): Tricep focused.' },
-            { id: 'ring_dips', name: 'Gymnastic Ring Dips', sets: 3, reps: 'AMRAP', rest: 90, note: 'Block 2 (Hypertrophy): Use parallel bars if needed.' },
-            { id: 'kb_upright', name: 'KB Upright Rows', sets: 3, reps: '10-12', rest: 90, note: 'Block 2 (Hypertrophy).' },
-            { id: 'unilateral_press', name: 'KB Clean & Press', sets: 2, reps: '5m', rest: 0, note: 'Block 3 (Endurance): 5m Right, then 5m Left.' }
+        blocks: [
+            {
+                id: 'warmup',
+                name: 'Morning Prep',
+                icon: '🌅',
+                exercises: [
+                    { id: 'warmup', name: 'Desk-to-Barbell Warmup', sets: 1, reps: '3m', rest: 0, note: 'Wrist circles, shoulder dislocates.' }
+                ]
+            },
+            {
+                id: 'power',
+                name: 'Morning Power',
+                icon: '⚡',
+                exercises: [
+                    { id: 'cg_bench', name: 'Close-Grip Bench', sets: 3, reps: '3-5', rest: 180, note: 'Tricep focused.' }
+                ]
+            },
+            {
+                id: 'hypertrophy',
+                name: 'Afternoon Hypertrophy',
+                icon: '💪',
+                exercises: [
+                    { id: 'ring_dips', name: 'Gymnastic Ring Dips', sets: 3, reps: 'AMRAP', rest: 90, note: 'Use parallel bars if needed.' },
+                    { id: 'kb_upright', name: 'KB Upright Rows', sets: 3, reps: '10-12', rest: 90, note: '' }
+                ]
+            },
+            {
+                id: 'endurance',
+                name: 'Evening Endurance',
+                icon: '🔥',
+                exercises: [
+                    { id: 'unilateral_press', name: 'KB Clean & Press', sets: 2, reps: '5m', rest: 0, note: '5m Right, then 5m Left.' }
+                ]
+            }
         ]
     },
     5: {
         type: 'rest',
         name: 'Full Rest',
         tag: 'Recovery',
-        exercises: []
+        blocks: []
     }
 };
 
@@ -70,9 +183,9 @@ const WEEKLY_MAP = ['1', '2', '3', '4', 'R'];
  * STATE MANAGEMENT
  */
 const State = {
-    currentDay: 1, // 1-7
-    activeSession: null,
-    editIndex: null, // Index of log being edited, or null
+    currentDay: 1,
+    activeBlock: null, // Index into PLAN[day].blocks during a workout
+    editIndex: null,   // Index of log being edited, or null
     history: [],
 
     init() {
@@ -105,10 +218,6 @@ const State = {
         Render.home();
     },
 
-    nextDay() {
-        // No-op in auto mode
-    },
-
     updateTheme() {
         const dayData = PLAN[this.currentDay];
         document.body.setAttribute('data-theme', dayData ? dayData.type : 'iron');
@@ -131,11 +240,41 @@ const State = {
         });
     },
 
-    isTodayComplete() {
-        if (this.history.length === 0) return false;
-        const lastLog = this.history[0];
+    /**
+     * Check if a specific block is completed today for the current day.
+     */
+    isBlockComplete(blockId) {
         const today = new Date().toDateString();
-        return new Date(lastLog.date).toDateString() === today;
+        return this.history.some(log =>
+            new Date(log.date).toDateString() === today &&
+            log.dayId === this.currentDay &&
+            log.blockId === blockId
+        );
+    },
+
+    /**
+     * Check if ALL blocks for the current day are completed today.
+     */
+    isDayComplete() {
+        const dayData = PLAN[this.currentDay];
+        if (!dayData || dayData.type === 'rest' || dayData.blocks.length === 0) return false;
+        return dayData.blocks.every(block => this.isBlockComplete(block.id));
+    },
+
+    /**
+     * Count how many blocks are done today.
+     */
+    completedBlockCount() {
+        const dayData = PLAN[this.currentDay];
+        if (!dayData || dayData.blocks.length === 0) return 0;
+        return dayData.blocks.filter(block => this.isBlockComplete(block.id)).length;
+    },
+
+    /**
+     * Legacy compat — used by heatmap.
+     */
+    isTodayComplete() {
+        return this.isDayComplete();
     }
 };
 
@@ -147,23 +286,11 @@ const Utils = {
         if (navigator.vibrate) navigator.vibrate(pattern);
     },
 
-    // Check if a specific cycle day is completed in history (basic logic: assumes ideal week)
-    // For a real app, you'd match dates. Here we just mock visually based on current day progression.
     getDayStatus(dayIdx) {
-        // Advanced: Check history for this week
-        // Find log where dayId == dayIdx AND date is within this week?
-        // Simpler: Just rely on Current Day
-
         if (dayIdx === State.currentDay) {
             return State.isTodayComplete() ? (PLAN[dayIdx].type === 'iron' ? 'done-iron' : 'done-body') : 'current';
         }
-
-        // Past days in the week... complicated without exact week boundaries.
-        // We'll stick to: If < currentDay, assume done? No, that was the old way.
-        // New way: We just highlight Today. The heatmap is becoming less useful without calendar logic.
-        // Let's at least highlight Today properly.
-
-        return dayIdx === State.currentDay ? 'current' : '';
+        return '';
     }
 };
 
@@ -173,10 +300,13 @@ const Utils = {
 const Render = {
     home() {
         ScreenLock.release();
-        State.editIndex = null; // Clear edit state on home
+        State.editIndex = null;
+        State.activeBlock = null;
         const dayData = PLAN[State.currentDay];
         const isRest = dayData.type === 'rest';
-        const isComplete = State.isTodayComplete();
+        const allComplete = State.isDayComplete();
+        const doneCount = State.completedBlockCount();
+        const totalBlocks = dayData.blocks.length;
 
         // Generate Heatmap
         let heatmapHTML = `<div class="heatmap-container fade-in">`;
@@ -184,7 +314,7 @@ const Render = {
         for (let i = 1; i <= daysCount; i++) {
             let statusClass = '';
             if (i === State.currentDay) {
-                statusClass = isComplete ? (PLAN[i].type === 'iron' ? 'done-iron' : 'done-body') : 'current';
+                statusClass = allComplete ? (PLAN[i].type === 'iron' ? 'done-iron' : 'done-body') : 'current';
             }
             const letter = WEEKLY_MAP[i - 1];
             heatmapHTML += `<div class="heatmap-bubble ${statusClass}">${letter}</div>`;
@@ -193,14 +323,27 @@ const Render = {
 
         let content = '';
 
-        if (isComplete) {
+        if (isRest) {
+            // Rest day
+            content = `
+                <div class="card fade-in slide-up">
+                    <div class="mb-4">
+                        <h2 class="text-primary mb-1">${dayData.name}</h2>
+                        <p class="text-secondary text-sm uppercase tracking-wide">${dayData.tag}</p>
+                    </div>
+                    <p class="mb-6 text-secondary">Mandatory rest. Light walking or stretching only. No heavy lifting.</p>
+                    <button class="btn btn-ghost cursor-default">Rest Day</button>
+                </div>
+            `;
+        } else if (allComplete) {
+            // All blocks done
             content = `
                 <div class="card fade-in slide-up text-center py-12">
-                     <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500/20 text-green-400 mb-6">
+                     <div class="block-done-icon mx-auto mb-6">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                      </div>
-                     <h2 class="text-primary mb-2">Session Complete</h2>
-                     <p class="text-secondary">Good work today. Recover and prepare for tomorrow.</p>
+                     <h2 class="text-primary mb-2">All Blocks Complete</h2>
+                     <p class="text-secondary">Every session done for today. Recover and prepare.</p>
                 </div>
                 
                 <div class="mt-8 fade-in">
@@ -215,46 +358,67 @@ const Render = {
                 </div>
             `;
         } else {
-            content = `
-                <div class="card fade-in slide-up">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h2 class="text-primary mb-1">${dayData.name}</h2>
-                            <p class="text-secondary text-sm uppercase tracking-wide">${dayData.tag}</p>
-                        </div>
-                    </div>
-                    
-                    ${isRest ?
-                    `<p class="mb-6 text-secondary">Mandatory rest. Light walking or stretching only. No heavy lifting.</p>` :
-                    `<div class="mb-6 space-y-2">
-                            ${dayData.exercises.map(ex => `
-                                <div class="flex items-center text-sm text-secondary">
-                                    <span class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs mr-3">${ex.sets}</span>
-                                    <span>${ex.name}</span>
-                                </div>
-                            `).join('')}
-                        </div>`
-                }
+            // Show progress bar + individual block cards
+            const progressPct = totalBlocks > 0 ? Math.round((doneCount / totalBlocks) * 100) : 0;
 
-                    ${isRest ?
-                    `<button class="btn btn-ghost cursor-default">Rest Day</button>` :
-                    `<button onclick="Render.workout()" class="btn btn-primary">Start Session</button>`
-                }
+            content = `
+                <div class="block-progress fade-in mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-secondary uppercase tracking-wide">Today's Progress</span>
+                        <span class="text-xs font-bold text-primary">${doneCount} / ${totalBlocks} blocks</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" style="width: ${progressPct}%"></div>
+                    </div>
                 </div>
-                
-                ${!isRest ?
-                    `<div class="mt-8 fade-in">
+
+                ${dayData.blocks.map((block, blockIdx) => {
+                    const isDone = State.isBlockComplete(block.id);
+                    return `
+                        <div class="block-card card fade-in slide-up ${isDone ? 'block-done' : ''}" style="animation-delay: ${blockIdx * 0.06}s">
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="block-icon">${block.icon}</span>
+                                    <div>
+                                        <h3 class="block-card-title">${block.name}</h3>
+                                        <span class="text-xs text-secondary">${block.exercises.length} exercise${block.exercises.length !== 1 ? 's' : ''}</span>
+                                    </div>
+                                </div>
+                                ${isDone
+                                    ? `<div class="block-done-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                       </div>`
+                                    : `<button onclick="Render.workout(${blockIdx})" class="btn btn-primary btn-sm">Start</button>`
+                                }
+                            </div>
+                            <div class="space-y-1">
+                                ${block.exercises.map(ex => `
+                                    <div class="flex items-center text-sm text-secondary">
+                                        <span class="exercise-set-badge">${ex.sets}</span>
+                                        <span>${ex.name}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            `;
+        }
+
+        // Pro tips for non-rest, non-complete days
+        if (!isRest && !allComplete) {
+            content += `
+                <div class="mt-4 fade-in">
                     <h3 class="text-secondary text-sm mb-4">Pro Tips</h3>
                     <div class="card p-4">
                         <ul class="text-sm list-disc pl-4 space-y-2 text-secondary">
-                            ${dayData.type === 'iron' ?
-                        `<li>Rest <strong>3-5 minutes</strong> between sets.</li><li>Leave 1-2 reps in the tank (RPE 8-9).</li><li>Focus on TENSION, not failing.</li>` :
-                        `<li>Rest <strong>60-90 seconds</strong> only.</li><li>Go to technical failure.</li><li>Focus on SWEAT.</li>`
-                    }
+                            ${dayData.type === 'iron'
+                                ? `<li>Rest <strong>3-5 minutes</strong> between sets.</li><li>Leave 1-2 reps in the tank (RPE 8-9).</li><li>Focus on TENSION, not failing.</li>`
+                                : `<li>Rest <strong>60-90 seconds</strong> only.</li><li>Go to technical failure.</li><li>Focus on SWEAT.</li>`
+                            }
                         </ul>
                     </div>
-                </div>` : ''
-                }
+                </div>
             `;
         }
 
@@ -267,7 +431,8 @@ const Render = {
                              <span>Cycle Day ${State.currentDay}</span>
                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
                         </div>
-                        <h1>${isRest ? 'Recovery Mode' : 'Ready to Train?'}</h1>
+                        <h1>${dayData.name}</h1>
+                        <p class="text-secondary text-sm uppercase tracking-wide">${dayData.tag}</p>
                     </div>
                 </div>
             </header>
@@ -278,9 +443,16 @@ const Render = {
         this.updateNav('train');
     },
 
-    workout(prefillSets = null) {
+    /**
+     * Render workout screen for a specific block.
+     * @param {number} blockIdx - Index into the current day's blocks array.
+     * @param {number|null} prefillSets - Number of sets to pre-check (for editing).
+     */
+    workout(blockIdx, prefillSets = null) {
         ScreenLock.request();
         const dayData = PLAN[State.currentDay];
+        const block = dayData.blocks[blockIdx];
+        State.activeBlock = blockIdx;
         const isEditing = State.editIndex !== null;
 
         let html = `
@@ -290,7 +462,8 @@ const Render = {
                         <button onclick="${isEditing ? 'Render.history()' : 'Render.home()'}" class="mr-4 text-secondary"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
                         <div>
                             ${isEditing ? '<span class="text-xs text-primary font-bold uppercase">Editing Mode</span>' : ''}
-                            <h2>${dayData.name}</h2>
+                            <h2>${block.icon} ${block.name}</h2>
+                            <p class="text-xs text-secondary">${dayData.name}</p>
                         </div>
                     </div>
                 </div>
@@ -303,7 +476,7 @@ const Render = {
                     </div>
                 </div>
 
-                ${dayData.exercises.map((ex, exIdx) => `
+                ${block.exercises.map((ex, exIdx) => `
                     <div class="card mb-6">
                         <div class="mb-3">
                             <h3 class="text-lg">${ex.name}</h3>
@@ -317,10 +490,7 @@ const Render = {
 
                         <div class="space-y-3">
                             ${Array(ex.sets).fill(0).map((_, setIdx) => {
-            // Auto-check logic if editing
-            // Basic logic: if prefillSets > count of previous exercises sets?
-            // Actually, simpler: history stores 'completedSets' total count.
-            // We'll just check the first N circles.
+            // Auto-check logic for editing
             let shouldCheck = false;
             if (Number.isInteger(prefillSets) && prefillSets > 0) {
                 shouldCheck = true;
@@ -341,7 +511,7 @@ const Render = {
                 `).join('')}
 
                 <div class="pb-24">
-                    <button onclick="Session.finish()" class="btn btn-primary">${isEditing ? 'Update Log' : 'Finish Workout'}</button>
+                    <button onclick="Session.finish()" class="btn btn-primary">${isEditing ? 'Update Log' : 'Finish Block'}</button>
                 </div>
             </div>
         `;
@@ -362,6 +532,7 @@ const Render = {
                         <div class="flex justify-between items-start mb-2">
                             <div>
                                 <span class="font-bold text-lg">${entry.name}</span>
+                                ${entry.blockId ? `<div class="text-xs text-primary font-bold uppercase mt-1">${entry.blockName || entry.blockId}</div>` : ''}
                                 <div class="text-xs text-secondary">${new Date(entry.date).toLocaleDateString()} ${new Date(entry.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                             </div>
                             <div class="flex gap-2">
@@ -466,18 +637,6 @@ const Render = {
     },
 
     updateNav(activeTab) {
-        // Inject Stats button if missing (runtime fix)
-        const nav = document.querySelector('.nav-bar');
-        if (nav && !nav.querySelector('[data-tab="stats"]')) {
-            const statsBtn = document.createElement('button');
-            statsBtn.className = 'nav-item';
-            statsBtn.dataset.tab = 'stats';
-            statsBtn.onclick = () => Render.stats();
-            statsBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span>Stats</span>`;
-            const historyBtn = nav.querySelector('[data-tab="history"]');
-            nav.insertBefore(statsBtn, historyBtn);
-        }
-
         document.querySelectorAll('.nav-item').forEach(el => {
             el.classList.remove('active');
             if (el.dataset.tab === activeTab) el.classList.add('active');
@@ -671,6 +830,8 @@ const Session = {
 
     edit(index) {
         const log = State.history[index];
+
+        // Block-aware editing — need both dayId and blockId
         if (!log.dayId) {
             Modal.alert('Legacy Log', 'This log cannot be edited (Legacy format).');
             return;
@@ -679,23 +840,41 @@ const Session = {
         State.editIndex = index;
         State.currentDay = log.dayId;
         State.updateTheme();
-        Render.workout(log.completedSets);
+
+        // Find the block index by blockId
+        const dayData = PLAN[State.currentDay];
+        let blockIdx = -1;
+
+        if (log.blockId && dayData.blocks) {
+            blockIdx = dayData.blocks.findIndex(b => b.id === log.blockId);
+        }
+
+        if (blockIdx === -1) {
+            // Legacy log without blockId — can't determine block
+            Modal.alert('Legacy Log', 'This log uses an older format and cannot be edited.');
+            State.editIndex = null;
+            return;
+        }
+
+        Render.workout(blockIdx, log.completedSets);
     },
 
     finish() {
         const isEditing = State.editIndex !== null;
+        const blockIdx = State.activeBlock;
+        const dayData = PLAN[State.currentDay];
+        const block = dayData.blocks[blockIdx];
 
         Modal.confirm(
-            isEditing ? 'Update Log?' : 'Finish Workout?',
-            isEditing ? 'Update this entry with new data?' : 'Log this session and mark today as complete?',
+            isEditing ? 'Update Log?' : 'Finish Block?',
+            isEditing ? 'Update this entry with new data?' : `Log "${block.name}" and mark as complete?`,
             () => {
                 // Scrape Data
-                const dayData = PLAN[State.currentDay];
                 const capturedExercises = [];
                 let totalSets = 0;
                 const newPRs = [];
 
-                dayData.exercises.forEach((ex, exIdx) => {
+                block.exercises.forEach((ex, exIdx) => {
                     const catKey = Stats.getCategory(ex.id);
                     let sessionMax1RM = 0;
 
@@ -752,7 +931,9 @@ const Session = {
                 const log = {
                     date: new Date().toISOString(),
                     dayId: State.currentDay,
-                    name: dayData.name,
+                    blockId: block.id,
+                    blockName: block.name,
+                    name: `${dayData.name} — ${block.name}`,
                     completedSets: totalSets,
                     exercises: capturedExercises
                 };

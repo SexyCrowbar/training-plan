@@ -405,3 +405,105 @@ input:focus {
     color: var(--primary);
     border-color: var(--primary);
 }
+
+/* --- BLOCK SESSION SYSTEM --- */
+
+/* Progress Bar */
+.block-progress {
+    padding: 0 0.25rem;
+}
+
+.progress-bar-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary));
+    border-radius: 999px;
+    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 8px var(--primary-glow);
+}
+
+/* Block Cards */
+.block-card {
+    border-left: 3px solid transparent;
+    transition: opacity 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.block-card:nth-child(2) {
+    /* warmup (after progress bar) */
+    border-left-color: rgba(147, 197, 253, 0.5);
+}
+
+.block-card:nth-child(3) {
+    /* power */
+    border-left-color: rgba(251, 191, 36, 0.6);
+}
+
+.block-card:nth-child(4) {
+    /* hypertrophy */
+    border-left-color: rgba(168, 85, 247, 0.6);
+}
+
+.block-card:nth-child(5) {
+    /* endurance */
+    border-left-color: rgba(239, 68, 68, 0.5);
+}
+
+.block-card.block-done {
+    opacity: 0.5;
+}
+
+.block-card.block-done:hover {
+    opacity: 0.7;
+}
+
+.block-card-title {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 1.05rem;
+}
+
+.block-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.block-done-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4ade80;
+    flex-shrink: 0;
+}
+
+.exercise-set-badge {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+}
+
+/* Small Button Variant */
+.btn-sm {
+    width: auto;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.8rem;
+    border-radius: 10px;
+}
