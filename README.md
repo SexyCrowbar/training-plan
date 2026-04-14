@@ -1,6 +1,6 @@
-# Protocol Training App
+# Micro-Dose Protocol Training App
 
-A premium, localized training companion for the Iron/Body split protocol.
+A premium, localized training companion for the 4-Day Rotating Distributed Training protocol. Designed for micro-dosing your workouts across the day.
 
 ## How to Deploy to GitHub Pages
 
@@ -19,6 +19,8 @@ A premium, localized training companion for the Iron/Body split protocol.
 
 ## Features
 
+- **Distributed Training**: Breaks training into short Morning (Power), Afternoon (Hypertrophy), and Evening (Endurance) blocks.
 - **Dual Theme System**: Automatically switches between "Iron" (Gold/Slate) and "Body" (Cyan) themes based on the day.
 - **Smart Timers**: Auto-starts rest timers appropriate for the session type (3-5m for Strength, 60s for Hypertrophy).
 - **Offline Capable**: Uses LocalStorage to save your progress and history on your device.
+- **Automated Rotation**: Automatically manages your 4-day active + 1 rest day cycle, now with manual skip buttons.

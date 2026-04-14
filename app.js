@@ -9,66 +9,54 @@ const app = document.getElementById('app');
 const PLAN = {
     1: {
         type: 'iron',
-        name: 'Iron A: Squat Focus',
-        tag: 'Force Output',
+        name: 'Day 1: Horizontal Push',
+        tag: 'Arms & Shoulders',
         exercises: [
-            { id: 'sq_zerch', name: 'Zercher Squat', sets: 5, reps: '3', rest: 240, note: 'Heavy. Brace hard.' },
-            { id: 'bp', name: 'Bench Press', sets: 4, reps: '8-10', rest: 180, note: 'Controlled eccentric. Explosive up.' },
-            { id: 'hang', name: 'Active Hang', sets: 3, reps: '30-60s', rest: 60, note: 'Decompression.' }
+            { id: 'warmup', name: 'Desk-to-Barbell Warmup', sets: 1, reps: '3m', rest: 0, note: 'Block 0: Arm circles, twists, deep squats.' },
+            { id: 'bp', name: 'Barbell Bench Press', sets: 3, reps: '3-5', rest: 180, note: 'Block 1 (Power): 60-70% max effort.' },
+            { id: 'dips', name: 'Parallel Bar Dips', sets: 3, reps: 'AMRAP', rest: 60, note: 'Block 2 (Hypertrophy): Superset 1.' },
+            { id: 'skullcrushers', name: 'EZ-Bar Skullcrushers', sets: 3, reps: '8-12', rest: 90, note: 'Block 2: Superset 2.' },
+            { id: 'kb_swing', name: 'KB Swings (16kg)', sets: 1, reps: '10m', rest: 0, note: 'Block 3 (Endurance): EMOM 15 reps/min.' }
         ]
     },
     2: {
         type: 'body',
-        name: 'Body A: Pull & Hinge',
-        tag: 'Endurance',
+        name: 'Day 2: Vertical Pull',
+        tag: 'Bicep Focus',
         exercises: [
-            { id: 'af_warm', name: 'Animal Flow Warm-up', sets: 1, reps: '5-10m', rest: 0, note: 'Ape & Crab reach.' },
-            { id: 'pullup', name: 'Pull-Ups', sets: 4, reps: 'AMRAP', rest: 90, note: 'Strict or Negatives.' },
-            { id: 'kb_swing', name: 'Kettlebell Swings', sets: 1, reps: '100 Total', rest: 60, note: 'Sets of 15/20/25.' },
-            { id: 'bear', name: 'Bear Crawl', sets: 3, reps: '60s', rest: 60, note: 'Fwd & Bwd.' }
+            { id: 'warmup', name: 'Desk-to-Barbell Warmup', sets: 1, reps: '3m', rest: 0, note: 'Block 0: Dead hangs, scap pull-ups.' },
+            { id: 'pullup_weighted', name: 'Weighted Pull-Ups', sets: 3, reps: '3-5', rest: 180, note: 'Block 1 (Power): Use dip belt.' },
+            { id: 'ez_curl', name: 'EZ-Bar Curls', sets: 3, reps: '8-12', rest: 60, note: 'Block 2 (Hypertrophy): Superset 1.' },
+            { id: 'facepull', name: 'Ring Face Pulls', sets: 3, reps: '12-15', rest: 90, note: 'Block 2: Superset 2 (Rear delts).' },
+            { id: 'amrap_circuit', name: 'Bodyweight AMRAP', sets: 1, reps: '10m', rest: 0, note: 'Block 3 (Endurance): 5 PU, 10 Push, 15 Squat.' }
         ]
     },
     3: {
         type: 'iron',
-        name: 'Iron B: Deadlift Focus',
-        tag: 'Posterior Power',
+        name: 'Day 3: Heavy Legs',
+        tag: 'Core Stability',
         exercises: [
-            { id: 'dl_zerch', name: 'Zercher Deadlift', sets: 5, reps: '3', rest: 240, note: 'Protect bicep tendons.' },
-            { id: 'ohp', name: 'Overhead Press', sets: 4, reps: '8-10', rest: 180, note: 'Strict military press.' },
-            { id: 'facepull', name: 'Face Pulls', sets: 3, reps: '15', rest: 60, note: 'Prehab.' }
+            { id: 'warmup', name: 'Desk-to-Barbell Warmup', sets: 1, reps: '3m', rest: 0, note: 'Block 0: Hip openers, Cossack squats.' },
+            { id: 'sq_zerch', name: 'Barbell Zercher Squats', sets: 3, reps: '3-5', rest: 180, note: 'Block 1 (Power): Core power & leg drive.' },
+            { id: 'ohp', name: 'Barbell Overhead Press', sets: 3, reps: '8-10', rest: 90, note: 'Block 2 (Hypertrophy): Strict standing.' },
+            { id: 'ez_rev_curl', name: 'EZ-Bar Reverse Curls', sets: 3, reps: '10-12', rest: 90, note: 'Block 2 (Hypertrophy): Target brachialis.' },
+            { id: 'goblet_squat', name: 'KB Goblet Squats', sets: 3, reps: '15-20', rest: 0, note: 'Block 3 (Endurance): Superset w/ Planks.' },
+            { id: 'plank', name: 'Planks', sets: 3, reps: '60s', rest: 60, note: 'Block 3: Superset.' }
         ]
     },
     4: {
         type: 'body',
-        name: 'Body B: Push & Core',
-        tag: 'Pump & Density',
+        name: 'Day 4: Arm Annihilation',
+        tag: 'Functional Flow',
         exercises: [
-            { id: 'af_warm2', name: 'Animal Flow Warm-up', sets: 1, reps: '5-10m', rest: 0, note: 'Scorpion & Beast.' },
-            { id: 'dips', name: 'Parallel Bar Dips', sets: 4, reps: 'AMRAP', rest: 90, note: 'Lean forward.' },
-            { id: 'pushups', name: 'Pushups', sets: 1, reps: '100 Total', rest: 60, note: 'Sets of 15-25.' },
-            { id: 'situps', name: 'Sit-Ups', sets: 3, reps: 'AMRAP', rest: 60, note: 'Explosive up, 3s down.' }
+            { id: 'warmup', name: 'Desk-to-Barbell Warmup', sets: 1, reps: '3m', rest: 0, note: 'Block 0: Wrist circles, shoulder dislocates.' },
+            { id: 'cg_bench', name: 'Close-Grip Bench', sets: 3, reps: '3-5', rest: 180, note: 'Block 1 (Power): Tricep focused.' },
+            { id: 'ring_dips', name: 'Gymnastic Ring Dips', sets: 3, reps: 'AMRAP', rest: 90, note: 'Block 2 (Hypertrophy): Use parallel bars if needed.' },
+            { id: 'kb_upright', name: 'KB Upright Rows', sets: 3, reps: '10-12', rest: 90, note: 'Block 2 (Hypertrophy).' },
+            { id: 'unilateral_press', name: 'KB Clean & Press', sets: 2, reps: '5m', rest: 0, note: 'Block 3 (Endurance): 5m Right, then 5m Left.' }
         ]
     },
     5: {
-        type: 'iron',
-        name: 'Iron C: Squat Volume',
-        tag: 'Leg Power',
-        exercises: [
-            { id: 'sq_zerch_vol', name: 'Zercher Squat', sets: 5, reps: '3', rest: 240, note: 'Focus on speed. -10% if fried.' },
-            { id: 'bp_vol', name: 'Bench Press', sets: 4, reps: '8-10', rest: 180, note: 'Perfect technique.' }
-        ]
-    },
-    6: {
-        type: 'body',
-        name: 'Body C: The Flow',
-        tag: 'Active Recovery',
-        exercises: [
-            { id: 'af_combine', name: 'Animal Flow Combine', sets: 1, reps: '20m', rest: 0, note: 'Continuous movement.' },
-            { id: 'chins', name: 'Chin-Ups', sets: 3, reps: 'AMRAP', rest: 90, note: 'Palms facing you.' },
-            { id: 'kb_swing_p', name: 'Kettlebell Swings', sets: 5, reps: '20', rest: 60, note: 'Perfect hip snap.' }
-        ]
-    },
-    7: {
         type: 'rest',
         name: 'Full Rest',
         tag: 'Recovery',
@@ -76,7 +64,7 @@ const PLAN = {
     }
 };
 
-const WEEKLY_MAP = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const WEEKLY_MAP = ['1', '2', '3', '4', 'R'];
 
 /**
  * STATE MANAGEMENT
@@ -88,12 +76,24 @@ const State = {
     history: [],
 
     init() {
-        // Auto-detect day (Mon=1 ... Sun=7)
-        const day = new Date().getDay();
-        this.currentDay = day === 0 ? 7 : day;
-
         const storedHistory = localStorage.getItem('wp_history');
         if (storedHistory) this.history = JSON.parse(storedHistory);
+
+        const daysCount = Object.keys(PLAN).length;
+
+        if (this.history.length > 0) {
+            const lastLog = this.history[0];
+            const today = new Date().toDateString();
+            if (new Date(lastLog.date).toDateString() === today) {
+                this.currentDay = lastLog.dayId || 1;
+            } else {
+                this.currentDay = ((lastLog.dayId || 1) % daysCount) + 1;
+            }
+        } else {
+            this.currentDay = 1;
+        }
+
+        if (this.currentDay < 1 || this.currentDay > daysCount) this.currentDay = 1;
 
         this.updateTheme();
     },
@@ -180,7 +180,8 @@ const Render = {
 
         // Generate Heatmap
         let heatmapHTML = `<div class="heatmap-container fade-in">`;
-        for (let i = 1; i <= 7; i++) {
+        const daysCount = Object.keys(PLAN).length;
+        for (let i = 1; i <= daysCount; i++) {
             let statusClass = '';
             if (i === State.currentDay) {
                 statusClass = isComplete ? (PLAN[i].type === 'iron' ? 'done-iron' : 'done-body') : 'current';
@@ -262,7 +263,10 @@ const Render = {
                 ${heatmapHTML}
                 <div class="flex justify-between items-center mb-6">
                     <div>
-                        <div class="badge ${dayData.type === 'iron' ? 'active' : ''} mb-2">Cycle Day ${State.currentDay}</div>
+                        <div class="badge ${dayData.type === 'iron' ? 'active' : ''} mb-2 flex justify-between items-center w-36 cursor-pointer" onclick="State.setDay(State.currentDay === ${daysCount} ? 1 : State.currentDay + 1)" title="Skip to next day">
+                             <span>Cycle Day ${State.currentDay}</span>
+                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                        </div>
                         <h1>${isRest ? 'Recovery Mode' : 'Ready to Train?'}</h1>
                     </div>
                 </div>
@@ -522,11 +526,11 @@ const Stats = {
         // Exercise ID mapping
         const map = {
             'sq': ['sq_zerch', 'sq_zerch_vol'],
-            'bp': ['bp', 'bp_vol'],
+            'bp': ['bp', 'bp_vol', 'cg_bench'],
             'dl': ['dl_zerch'],
             'ohp': ['ohp'],
-            'pullup': ['pullup', 'chins'],
-            'dips': ['dips'],
+            'pullup': ['pullup', 'chins', 'pullup_weighted'],
+            'dips': ['dips', 'ring_dips'],
             'pushups': ['pushups']
         };
         const targets = map[key];
@@ -567,11 +571,11 @@ const Stats = {
     // Identify category for exercise ID
     getCategory(exId) {
         if (['sq_zerch', 'sq_zerch_vol'].includes(exId)) return 'sq';
-        if (['bp', 'bp_vol'].includes(exId)) return 'bp';
+        if (['bp', 'bp_vol', 'cg_bench'].includes(exId)) return 'bp';
         if (['dl_zerch'].includes(exId)) return 'dl';
         if (['ohp'].includes(exId)) return 'ohp';
-        if (['pullup', 'chins'].includes(exId)) return 'pullup';
-        if (['dips'].includes(exId)) return 'dips';
+        if (['pullup', 'chins', 'pullup_weighted'].includes(exId)) return 'pullup';
+        if (['dips', 'ring_dips'].includes(exId)) return 'dips';
         if (['pushups'].includes(exId)) return 'pushups';
         return null;
     },
