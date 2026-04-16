@@ -1,22 +1,18 @@
-import { useState, useRef, useEffect } from 'react'
+import { useRef } from 'react'
 import { DAYS } from '../data/plan'
 
-export default function HomeScreen({ currentDay, onDayChange, doneBlocks, onStartBlock }) {
-  const [gtg, setGtg] = useState({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 })
+export default function HomeScreen({ currentDay, onDayChange, doneBlocks, onStartBlock, gtgToday, onGtgChange }) {
   const numRef = useRef(null)
   const d = DAYS[currentDay]
   const isRest = d.theme === 'rest'
   const target = d.gtgTarget
-  const count = gtg[currentDay]
+  const count = gtgToday?.[currentDay] || 0
   const done = doneBlocks.size
   const total = d.blocks.length
 
   function adjustGtg(delta) {
     if (target === 0) return
-    setGtg(prev => {
-      const next = Math.max(0, (prev[currentDay] || 0) + delta)
-      return { ...prev, [currentDay]: next }
-    })
+    onGtgChange(currentDay, (prev) => prev + delta)
     if (numRef.current) {
       numRef.current.classList.remove('pop')
       void numRef.current.offsetWidth

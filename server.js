@@ -8,8 +8,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 const PORT = 3000
 const DATA_FILE = path.join(__dirname, 'data', 'history.json')
+const STATE_FILE = path.join(__dirname, 'data', 'state.json')
 
-app.use(express.json())
+app.use(express.json({ limit: '5mb' }))
 app.use(express.static(path.join(__dirname, 'dist')))
 
 app.get('/api/history', (req, res) => {
@@ -25,6 +26,26 @@ app.post('/api/history', (req, res) => {
   try {
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true })
     fs.writeFileSync(DATA_FILE, JSON.stringify(req.body, null, 2))
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Daily state (GtG counts keyed by date). Shared across devices.
+app.get('/api/state', (req, res) => {
+  try {
+    const data = fs.readFileSync(STATE_FILE, 'utf8')
+    res.json(JSON.parse(data))
+  } catch {
+    res.json({})
+  }
+})
+
+app.post('/api/state', (req, res) => {
+  try {
+    fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true })
+    fs.writeFileSync(STATE_FILE, JSON.stringify(req.body, null, 2))
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: err.message })
