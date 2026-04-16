@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "WebSearch",
+      "Bash(./gradlew.bat compileDebugKotlin)",
+      "Bash(./gradlew.bat kspDebugKotlin --stacktrace)"
+    ]
+  }
+}

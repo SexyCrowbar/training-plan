@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Protocol — Iron & Body</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ── THEME VARIABLES ─────────────────────────────────── */
+    :root {
+      --p:       #f0c040;
+      --p-dim:   rgba(240,192,64,0.12);
+      --bg:      #0f1117;
+      --surf:    #1a1f2e;
+      --surf2:   #212840;
+      --border:  rgba(255,255,255,0.08);
+      --text:    #e2e8f0;
+      --muted:   #5a6480;
+    }
+    [data-theme="body"] {
+      --p:       #22d3ee;
+      --p-dim:   rgba(34,211,238,0.12);
+      --bg:      #081520;
+      --surf:    #0d2535;
+      --surf2:   #112d40;
+      --border:  rgba(255,255,255,0.07);
+    }
+    [data-theme="rest"] {
+      --p:       #818cf8;
+      --p-dim:   rgba(129,140,248,0.12);
+      --bg:      #0f1117;
+      --surf:    #181825;
+      --surf2:   #201f30;
+      --border:  rgba(255,255,255,0.06);
+    }
+
+    /* ── RESET & BASE ────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-tap-highlight-color: transparent; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100svh;
+      transition: background 0.35s ease;
+      overflow-x: hidden;
+    }
+    * { scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+
+    /* ── LAYOUT ──────────────────────────────────────────── */
+    .screen { display: none; padding: 20px 16px 96px; max-width: 430px; margin: 0 auto; }
+    .screen.active { display: block; animation: fadeUp 0.22s ease forwards; }
+
+    /* ── CARD ────────────────────────────────────────────── */
+    .card {
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .card-done {
+      background: var(--p-dim) !important;
+      border-color: color-mix(in srgb, var(--p) 35%, transparent) !important;
+    }
+
+    /* ── BUTTONS ─────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 700; border-radius: 12px;
+      cursor: pointer; border: none; outline: none;
+      -webkit-appearance: none; transition: all 0.15s ease;
+      user-select: none; -webkit-user-select: none;
+    }
+    .btn-primary { background: var(--p); color: #000; padding: 10px 18px; font-size: 13px; }
+    .btn-primary:active { opacity: 0.72; transform: scale(0.96); }
+    .btn-ghost { background: var(--p-dim); color: var(--p); padding: 9px 16px; font-size: 13px; }
+    .btn-ghost:active { opacity: 0.7; }
+    .btn-icon {
+      background: var(--surf2); color: var(--muted);
+      width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+    }
+    .btn-icon:active { opacity: 0.7; transform: scale(0.93); }
+
+    /* ── DAY TABS ────────────────────────────────────────── */
+    .tabs { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px; }
+    .tab {
+      flex-shrink: 0; padding: 6px 15px;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.03em;
+      border-radius: 20px; cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surf); color: var(--muted);
+      transition: all 0.2s; outline: none;
+    }
+    .tab.active { background: var(--p); color: #000; border-color: var(--p); }
+    .tab:not(.active):hover { border-color: var(--p); color: var(--p); }
+
+    /* ── PROGRESS BAR ────────────────────────────────────── */
+    .prog-track { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .prog-fill   { height: 100%; background: var(--p); border-radius: 99px; transition: width 0.4s ease; }
+
+    /* ── GTG ─────────────────────────────────────────────── */
+    .gtg-btn {
+      flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; background: var(--surf2);
+      font-size: 26px; font-weight: 900; color: var(--muted);
+      transition: all 0.15s; user-select: none;
+      -webkit-user-select: none; outline: none;
+    }
+    .gtg-btn:hover { border-color: var(--p); color: var(--p); }
+    .gtg-btn:active { transform: scale(0.88); }
+    .gtg-add { background: var(--p); color: #000; border-color: var(--p); font-size: 30px; }
+    .gtg-add:hover { opacity: 0.85; }
+    .gtg-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--border); transition: background 0.3s; flex-shrink: 0;
+    }
+    .gtg-dot.on  { background: var(--p); }
+    .gtg-dot.ov  { background: #4ade80; }
+
+    /* ── SET ROWS ────────────────────────────────────────── */
+    .set-row {
+      display: grid;
+      grid-template-columns: 38px 1fr 1fr 34px;
+      gap: 8px; align-items: center;
+    }
+    .set-input {
+      background: rgba(0,0,0,0.22); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 6px;
+      font-size: 14px; font-weight: 600; text-align: center;
+      color: var(--text); width: 100%; min-width: 0;
+      transition: border-color 0.2s; -webkit-appearance: none;
+    }
+    .set-input:focus { outline: none; border-color: var(--p); }
+    .set-input::placeholder { color: var(--muted); font-weight: 400; }
+
+    /* ── CHECK CIRCLE ────────────────────────────────────── */
+    .check {
+      flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .check:hover { border-color: var(--p); }
+    .check.on { background: var(--p); border-color: var(--p); color: #000; }
+    .check svg { opacity: 0; transition: opacity 0.15s; }
+    .check.on svg { opacity: 1; }
+
+    /* ── TIMER ───────────────────────────────────────────── */
+    .timer-bar {
+      background: #07080d; border: 1px solid var(--p);
+      border-radius: 14px; padding: 10px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.6);
+    }
+    .sticky-top { position: sticky; top: 10px; z-index: 50; }
+
+    /* ── BADGE ───────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 99px;
+      font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+      background: var(--p-dim); color: var(--p);
+    }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--p); }
+
+    /* ── NOTE ────────────────────────────────────────────── */
+    .note {
+      padding: 8px 12px; margin: 8px 0 12px;
+      background: rgba(255,255,255,0.04);
+      border-left: 3px solid var(--p); border-radius: 0 8px 8px 0;
+      font-size: 12px; color: var(--muted); line-height: 1.5;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────── */
+    .nav-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      display: flex; justify-content: space-around; align-items: center;
+      padding: 8px 0 max(env(safe-area-inset-bottom, 0px), 8px);
+      background: var(--bg); border-top: 1px solid var(--border);
+      z-index: 100; transition: background 0.35s, border-color 0.35s;
+    }
+    .nav-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 6px 20px; font-size: 10px; font-weight: 800;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--muted); cursor: pointer; background: none; border: none;
+      transition: color 0.2s; outline: none;
+    }
+    .nav-btn.active { color: var(--p); }
+    .nav-btn svg { width: 20px; height: 20px; }
+
+    /* ── MISC ────────────────────────────────────────────── */
+    .divider   { height: 1px; background: var(--border); }
+    .sec-label { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .text-p    { color: var(--p); }
+    .text-m    { color: var(--muted); }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes pop    { 0%{transform:scale(1)} 40%{transform:scale(1.18)} 100%{transform:scale(1)} }
+    .pop { animation: pop 0.22s ease; }
+
+    /* Chart */
+    .chart-wrap { position: relative; height: 130px; }
+
+    /* ── TOGGLE SWITCH ───────────────────────────────────── */
+    .toggle-wrap {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0;
+    }
+    .toggle {
+      position: relative; width: 48px; height: 28px; flex-shrink: 0;
+      cursor: pointer;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: var(--surf2); border-radius: 99px;
+      border: 1px solid var(--border);
+      transition: background 0.25s, border-color 0.25s;
+    }
+    .toggle input:checked ~ .toggle-track {
+      background: var(--p); border-color: var(--p);
+    }
+    .toggle-thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--muted); transition: transform 0.25s, background 0.25s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+    .toggle input:checked ~ .toggle-track .toggle-thumb {
+      transform: translateX(20px); background: #000;
+    }
+
+    /* ── HOUR STEPPER ────────────────────────────────────── */
+    .stepper {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .step-btn {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: var(--surf2); border: 1px solid var(--border);
+      color: var(--text); font-size: 18px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+      outline: none;
+    }
+    .step-btn:hover  { border-color: var(--p); color: var(--p); }
+    .step-btn:active { transform: scale(0.9); }
+    .step-val {
+      min-width: 56px; text-align: center;
+      font-size: 16px; font-weight: 800; color: var(--text);
+    }
+
+    /* ── PREVIEW CHIPS ───────────────────────────────────── */
+    .preview-chips {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px;
+    }
+    .hour-chip {
+      padding: 4px 10px; border-radius: 99px;
+      font-size: 11px; font-weight: 700;
+      background: var(--p-dim); color: var(--p);
+      transition: all 0.2s;
+    }
+    .hour-chip.dim {
+      background: var(--surf2); color: var(--muted);
+      text-decoration: line-through; opacity: 0.5;
+    }
+
+    /* disabled state */
+    .settings-disabled { opacity: 0.38; pointer-events: none; }
+  </style>
+</head>
+<body data-theme="iron">
+
+<!-- ═══════════════════════════════════════════════════════
+     TRAIN / HOME SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="s-home" class="screen active">
+
+  <!-- Top bar -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <div>
+      <h1 style="font-size:20px;font-weight:900;letter-spacing:-0.02em">Protocol</h1>
+      <p class="text-m" style="font-size:12px;margin-top:1px" id="home-date"></p>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="badge"><span class="badge-dot"></span><span id="badge-label">IRON DAY</span></span>
+      <button class="btn btn-icon" onclick="navTo('settings')" title="Settings" style="width:34px;height:34px;border-radius:10px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Day tabs -->
+  <div class="tabs" id="day-tabs" style="margin-bottom:20px"></div>
+
+  <!-- Day title -->
+  <div style="margin-bottom:18px">
+    <h2 id="day-title" style="font-size:22px;font-weight:900;letter-spacing:-0.02em;line-height:1.2"></h2>
+    <p id="day-tag" class="text-m" style="font-size:13px;margin-top:3px"></p>
+  </div>
+
+  <!-- GTG Card -->
+  <div class="card" id="gtg-card" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <p class="sec-label">Grease the Groove</p>
+        <p id="gtg-ex" class="text-m" style="font-size:12px;margin-top:3px"></p>
+      </div>
+      <span class="text-p" style="font-size:11px;font-weight:700">Today</span>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+      <button class="gtg-btn" onclick="adjustGtg(-1)">−</button>
+      <div style="text-align:center;flex:1">
+        <div id="gtg-num" class="text-p" style="font-size:56px;font-weight:900;line-height:1;letter-spacing:-0.03em">0</div>
+        <p class="text-m" style="font-size:12px;margin-top:5px">of <span id="gtg-target">5</span> sets</p>
+      </div>
+      <button class="gtg-btn gtg-add" onclick="adjustGtg(1)">+</button>
+    </div>
+    <div id="gtg-dots" style="display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:14px"></div>
+  </div>
+
+  <!-- Block progress header -->
+  <div id="prog-header" style="margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span class="sec-label">Today's Blocks</span>
+      <span class="text-p" id="block-count" style="font-size:11px;font-weight:800">0 / 0 done</span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- Block cards -->
+  <div id="block-list" style="display:flex;flex-direction:column;gap:10px;margin-top:14px"></div>
+
+  <!-- Rest day placeholder -->
+  <div class="card" id="rest-card" style="display:none;text-align:center;padding:40px 20px;margin-top:14px">
+    <div style="font-size:48px;margin-bottom:12px">😴</div>
+    <h3 style="font-size:18px;font-weight:800;margin-bottom:6px">Rest Day</h3>
+    <p class="text-m" style="font-size:13px;line-height:1.6">Light walking or stretching only.<br>Let the CNS fully recover.</p>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     WORKOUT SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="s-workout" class="screen">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:20px">
+    <button class="btn btn-icon" onclick="navTo('home')" style="margin-top:2px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div>
+      <p id="wo-label" class="text-p" style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:3px"></p>
+      <h2 id="wo-name" style="font-size:19px;font-weight:900;letter-spacing:-0.02em;line-height:1.2"></h2>
+      <p id="wo-sub" class="text-m" style="font-size:12px;margin-top:3px"></p>
+    </div>
+  </div>
+
+  <!-- Sticky timer -->
+  <div class="sticky-top" style="margin-bottom:14px">
+    <div class="timer-bar" id="timer-bar" style="display:none">
+      <div>
+        <p style="font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Rest Timer</p>
+      </div>
+      <span id="timer-display" class="text-p" style="font-family:monospace;font-size:28px;font-weight:900;letter-spacing:0.04em">00:00</span>
+      <button onclick="stopTimer()" style="font-size:11px;font-weight:800;text-transform:uppercase;color:#f87171;background:none;border:none;cursor:pointer;letter-spacing:0.06em">Stop</button>
+    </div>
+  </div>
+
+  <!-- Exercise cards -->
+  <div id="wo-exercises" style="display:flex;flex-direction:column;gap:14px"></div>
+
+  <!-- Finish -->
+  <div style="margin-top:24px">
+    <button class="btn btn-primary" onclick="finishBlock()"
+      style="width:100%;padding:16px;font-size:15px;border-radius:14px;letter-spacing:0.03em">
+      Finish Block
+    </button>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     HISTORY SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="s-history" class="screen">
+  <h1 style="font-size:20px;font-weight:900;letter-spacing:-0.02em;margin-bottom:20px">History</h1>
+  <div id="history-list" style="display:flex;flex-direction:column;gap:10px"></div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     STATS SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="s-stats" class="screen">
+  <h1 style="font-size:20px;font-weight:900;letter-spacing:-0.02em;margin-bottom:20px">Progress</h1>
+
+  <div class="tabs" id="lift-tabs" style="margin-bottom:16px">
+    <button class="tab active" onclick="selectLift(this,'Bench Press')">Bench</button>
+    <button class="tab" onclick="selectLift(this,'Zercher Squat')">Squat</button>
+    <button class="tab" onclick="selectLift(this,'Overhead Press')">OHP</button>
+    <button class="tab" onclick="selectLift(this,'Weighted Pull-Ups')">Pull-Up</button>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <h3 id="lift-name" style="font-size:15px;font-weight:800">Bench Press</h3>
+        <p class="text-m" style="font-size:11px;margin-top:2px">Estimated 1-Rep Max</p>
+      </div>
+      <div style="text-align:right">
+        <p class="text-p" style="font-size:24px;font-weight:900;line-height:1">104 kg</p>
+        <p class="text-m" style="font-size:10px;margin-top:2px">Current 1RM</p>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <svg viewBox="0 0 300 100" preserveAspectRatio="none" style="width:100%;height:100%">
+        <defs>
+          <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--p)" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="var(--p)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,82 C50,78 100,65 160,48 S240,22 300,14 L300,100 L0,100 Z" fill="url(#cg)"/>
+        <path d="M0,82 C50,78 100,65 160,48 S240,22 300,14" fill="none" stroke="var(--p)" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+        <circle cx="300" cy="14" r="5" fill="var(--p)" vector-effect="non-scaling-stroke"/>
+      </svg>
+      <p class="text-m" style="position:absolute;bottom:2px;left:0;font-size:10px">6 weeks ago</p>
+      <p class="text-m" style="position:absolute;bottom:2px;right:0;font-size:10px">Today</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="sec-label" style="margin-bottom:12px">Recent Sessions</p>
+    <div style="display:flex;flex-direction:column;gap:0">
+      <div class="divider"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;font-size:13px">
+        <span class="text-m">Apr 16</span>
+        <div><span style="font-family:monospace;font-weight:800">80 kg × 5</span> <span class="text-p" style="font-size:11px;margin-left:6px">est. 104kg</span></div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;font-size:13px">
+        <span class="text-m">Apr 11</span>
+        <div><span style="font-family:monospace;font-weight:800">77.5 kg × 5</span> <span class="text-p" style="font-size:11px;margin-left:6px">est. 100kg</span></div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;font-size:13px">
+        <span class="text-m">Apr 6</span>
+        <div><span style="font-family:monospace;font-weight:800">75 kg × 5</span> <span class="text-p" style="font-size:11px;margin-left:6px">est. 97kg</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SETTINGS SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="s-settings" class="screen">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <button class="btn btn-icon" onclick="navTo('home')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <h1 style="font-size:20px;font-weight:900;letter-spacing:-0.02em">Settings</h1>
+  </div>
+
+  <!-- Reminders card -->
+  <div class="card" style="margin-bottom:12px">
+    <label class="toggle-wrap" style="cursor:pointer">
+      <div>
+        <p style="font-size:15px;font-weight:800">GTG Reminders</p>
+        <p class="text-m" style="font-size:12px;margin-top:3px;line-height:1.5">
+          Hourly nudges to do a chin-up set<br>during your active hours.
+        </p>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="toggle-reminders" checked onchange="onToggleReminders(this.checked)">
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      </label>
+    </label>
+  </div>
+
+  <!-- Active hours card -->
+  <div class="card" id="hours-card" style="margin-bottom:12px">
+    <p class="sec-label" style="margin-bottom:16px">Active Hours</p>
+
+    <!-- Start hour -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <p style="font-size:13px;font-weight:700">Start</p>
+        <p class="text-m" style="font-size:11px;margin-top:2px">First reminder of the day</p>
+      </div>
+      <div class="stepper">
+        <button class="step-btn" onclick="adjustHour('start',-1)">−</button>
+        <span class="step-val" id="start-val">09:00</span>
+        <button class="step-btn" onclick="adjustHour('start',+1)">+</button>
+      </div>
+    </div>
+
+    <div class="divider" style="margin-bottom:14px"></div>
+
+    <!-- End hour -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <p style="font-size:13px;font-weight:700">End</p>
+        <p class="text-m" style="font-size:11px;margin-top:2px">Last reminder of the day</p>
+      </div>
+      <div class="stepper">
+        <button class="step-btn" onclick="adjustHour('end',-1)">−</button>
+        <span class="step-val" id="end-val">18:00</span>
+        <button class="step-btn" onclick="adjustHour('end',+1)">+</button>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div style="background:rgba(0,0,0,0.2);border-radius:12px;padding:12px">
+      <p class="sec-label" style="margin-bottom:10px">Reminder Schedule</p>
+      <div class="preview-chips" id="preview-chips"></div>
+      <p class="text-m" id="preview-count" style="font-size:11px;margin-top:10px"></p>
+    </div>
+  </div>
+
+  <!-- Active days card -->
+  <div class="card" id="days-card" style="margin-bottom:12px">
+    <p class="sec-label" style="margin-bottom:10px">Active Days</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" id="day-pills">
+      <span style="padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700;background:var(--p-dim);color:var(--p)">Day 1</span>
+      <span style="padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700;background:var(--p-dim);color:var(--p)">Day 2</span>
+      <span style="padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700;background:var(--p-dim);color:var(--p)">Day 3</span>
+      <span style="padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700;background:var(--p-dim);color:var(--p)">Day 4</span>
+      <span style="padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700;background:var(--surf2);color:var(--muted)">Rest ✕</span>
+    </div>
+    <p class="text-m" style="font-size:12px;margin-top:10px;line-height:1.5">
+      Reminders fire on training days only. Rest day is always excluded.
+    </p>
+  </div>
+
+  <!-- Notification preview card -->
+  <div class="card" id="notif-card">
+    <p class="sec-label" style="margin-bottom:12px">Notification Preview</p>
+    <div style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:14px;padding:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <div style="width:28px;height:28px;border-radius:8px;background:var(--p-dim);display:flex;align-items:center;justify-content:center;font-size:14px">💪</div>
+        <div>
+          <p style="font-size:12px;font-weight:800">Protocol</p>
+          <p class="text-m" style="font-size:10px">now</p>
+        </div>
+      </div>
+      <p style="font-size:13px;font-weight:700;margin-bottom:2px">Grease the Groove</p>
+      <p class="text-m" style="font-size:12px;line-height:1.4">Time for a set of chin-ups. Keep it easy — no sweat.</p>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     BOTTOM NAV
+═══════════════════════════════════════════════════════ -->
+<nav class="nav-bar">
+  <button class="nav-btn active" id="nav-home" onclick="navTo('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+      <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+    Train
+  </button>
+  <button class="nav-btn" id="nav-stats" onclick="navTo('stats')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>
+    </svg>
+    Stats
+  </button>
+  <button class="nav-btn" id="nav-history" onclick="navTo('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 20v-6M6 20V10M18 20V4"/>
+    </svg>
+    History
+  </button>
+</nav>
+
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════
+const DAYS = {
+  1: {
+    theme:'iron', name:'Day 1: Horizontal Push', tag:'Arms & Shoulders',
+    gtgTarget:5, gtgEx:'Strict Underhand Chin-ups',
+    blocks:[
+      { id:'warmup', icon:'🌅', name:'Morning Prep', exercises:[
+        { name:'Desk-to-Barbell Warmup', sets:1, target:'3 min', rest:0, note:'Arm circles, shoulder twists, deep squats.' }
+      ]},
+      { id:'power', icon:'⚡', name:'Morning Power', exercises:[
+        { name:'Barbell Bench Press', sets:3, target:'3-5 reps', rest:180, note:'60–70% max effort. Leave 2 reps in the tank.' }
+      ]},
+      { id:'hypertrophy', icon:'💪', name:'Afternoon Hypertrophy', exercises:[
+        { name:'Parallel Bar Dips', sets:3, target:'AMRAP', rest:60, note:'Superset 1 — go to near failure, controlled descent.' },
+        { name:'EZ-Bar Skullcrushers', sets:3, target:'8-12 reps', rest:90, note:'Superset 2 — elbows tucked, full extension.' }
+      ]},
+      { id:'endurance', icon:'🔥', name:'Evening Endurance', exercises:[
+        { name:'KB Swings (16kg)', sets:1, target:'10 min', rest:0, note:'EMOM — 15 reps at the top of every minute.' }
+      ]}
+    ]
+  },
+  2: {
+    theme:'body', name:'Day 2: Vertical Pull', tag:'Bicep Focus',
+    gtgTarget:5, gtgEx:'Strict Underhand Chin-ups',
+    blocks:[
+      { id:'warmup', icon:'🌅', name:'Morning Prep', exercises:[
+        { name:'Desk-to-Barbell Warmup', sets:1, target:'3 min', rest:0, note:'Dead hangs, scap pull-ups, wrist rotations.' }
+      ]},
+      { id:'power', icon:'⚡', name:'Morning Power', exercises:[
+        { name:'Weighted Pull-Ups', sets:3, target:'3-5 reps', rest:180, note:'Use dip belt. Strict form — dead hang start.' }
+      ]},
+      { id:'hypertrophy', icon:'💪', name:'Afternoon Hypertrophy', exercises:[
+        { name:'EZ-Bar Curls', sets:3, target:'8-12 reps', rest:60, note:'Superset 1 — full range, squeeze at top.' },
+        { name:'Ring Face Pulls', sets:3, target:'12-15 reps', rest:90, note:'Superset 2 — high attachment, rear delts.' }
+      ]},
+      { id:'endurance', icon:'🔥', name:'Evening Endurance', exercises:[
+        { name:'Bodyweight AMRAP', sets:1, target:'10 min', rest:0, note:'5 Pull-ups → 10 Push-ups → 15 Squats. Repeat.' }
+      ]}
+    ]
+  },
+  3: {
+    theme:'iron', name:'Day 3: Heavy Legs', tag:'Core Stability',
+    gtgTarget:5, gtgEx:'Strict Underhand Chin-ups',
+    blocks:[
+      { id:'warmup', icon:'🌅', name:'Morning Prep', exercises:[
+        { name:'Desk-to-Barbell Warmup', sets:1, target:'3 min', rest:0, note:'Hip openers, Cossack squats, leg swings.' }
+      ]},
+      { id:'power', icon:'⚡', name:'Morning Power', exercises:[
+        { name:'Barbell Zercher Squats', sets:3, target:'3-5 reps', rest:180, note:'Raw core power & leg drive. Brace hard.' }
+      ]},
+      { id:'hypertrophy', icon:'💪', name:'Afternoon Hypertrophy', exercises:[
+        { name:'Barbell Overhead Press', sets:3, target:'8-10 reps', rest:90, note:'Strict standing — zero leg drive.' },
+        { name:'EZ-Bar Reverse Curls', sets:3, target:'10-12 reps', rest:90, note:'Brachialis focus. Slow eccentric.' }
+      ]},
+      { id:'endurance', icon:'🔥', name:'Evening Endurance', exercises:[
+        { name:'KB Goblet Squats (16kg)', sets:3, target:'15-20 reps', rest:0, note:'Superset with Planks — no rest between.' },
+        { name:'Planks', sets:3, target:'60 sec', rest:60, note:'Superset — full body tension, squeeze glutes.' }
+      ]}
+    ]
+  },
+  4: {
+    theme:'body', name:'Day 4: Arm Annihilation', tag:'Functional Flow',
+    gtgTarget:5, gtgEx:'Strict Underhand Chin-ups',
+    blocks:[
+      { id:'warmup', icon:'🌅', name:'Morning Prep', exercises:[
+        { name:'Desk-to-Barbell Warmup', sets:1, target:'3 min', rest:0, note:'Wrist circles, shoulder dislocates, band pull-aparts.' }
+      ]},
+      { id:'power', icon:'⚡', name:'Morning Power', exercises:[
+        { name:'Close-Grip Bench', sets:3, target:'3-5 reps', rest:180, note:'Tricep focused — elbows tucked tight.' }
+      ]},
+      { id:'hypertrophy', icon:'💪', name:'Afternoon Hypertrophy', exercises:[
+        { name:'Gymnastic Ring Dips', sets:3, target:'AMRAP', rest:90, note:'Use parallel bars if rings are unstable.' },
+        { name:'KB Upright Rows (16kg)', sets:3, target:'10-12 reps', rest:90, note:'Controlled descent. Elbows lead.' }
+      ]},
+      { id:'endurance', icon:'🔥', name:'Evening Endurance', exercises:[
+        { name:'KB Clean & Press (16kg)', sets:2, target:'5 min each', rest:0, note:'5 min Right arm continuous, then 5 min Left.' }
+      ]}
+    ]
+  },
+  5: {
+    theme:'rest', name:'Full Rest', tag:'Recovery & Reset',
+    gtgTarget:0, gtgEx:'No GtG today — full rest',
+    blocks:[]
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const S = {
+  day: 1,
+  gtg:  { 1:0, 2:0, 3:0, 4:0, 5:0 },
+  done: { 1:new Set(), 2:new Set(), 3:new Set(), 4:new Set(), 5:new Set() },
+  activeBlock: null,
+  history: []
+};
+
+// ═══════════════════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════════════════
+let timerIv = null, timerSecs = 0;
+
+function startTimer(s) {
+  if (!s || s <= 0) return;
+  stopTimer();
+  timerSecs = s;
+  paintTimer();
+  const bar = document.getElementById('timer-bar');
+  if (bar) bar.style.display = 'flex';
+  timerIv = setInterval(() => {
+    timerSecs--;
+    if (timerSecs <= 0) { stopTimer(); return; }
+    paintTimer();
+  }, 1000);
+}
+function stopTimer() {
+  if (timerIv) { clearInterval(timerIv); timerIv = null; }
+  const bar = document.getElementById('timer-bar');
+  if (bar) bar.style.display = 'none';
+}
+function paintTimer() {
+  const m = String(Math.floor(timerSecs / 60)).padStart(2,'0');
+  const s = String(timerSecs % 60).padStart(2,'0');
+  const el = document.getElementById('timer-display');
+  if (el) el.textContent = `${m}:${s}`;
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function navTo(name) {
+  if (name !== 'workout') stopTimer();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const scr = document.getElementById('s-' + name);
+  if (scr) { scr.classList.add('active'); scr.scrollTop = 0; }
+  const nav = document.getElementById('nav-' + name);
+  if (nav) nav.classList.add('active');
+  if (name === 'home')    renderHome();
+  if (name === 'history') renderHistory();
+}
+
+// ═══════════════════════════════════════════════════════
+// HOME SCREEN
+// ═══════════════════════════════════════════════════════
+function renderHome() {
+  const d = DAYS[S.day];
+  document.body.setAttribute('data-theme', d.theme);
+
+  // Date
+  document.getElementById('home-date').textContent =
+    new Date().toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+
+  // Theme badge
+  const labels = { iron:'IRON DAY', body:'BODY DAY', rest:'REST DAY' };
+  document.getElementById('badge-label').textContent = labels[d.theme];
+
+  // Day tabs
+  const tabsEl = document.getElementById('day-tabs');
+  tabsEl.innerHTML = '';
+  Object.keys(DAYS).forEach(k => {
+    const n = parseInt(k);
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (n === S.day ? ' active' : '');
+    btn.textContent = n === 5 ? 'Rest' : `Day ${k}`;
+    btn.onclick = () => switchDay(n);
+    tabsEl.appendChild(btn);
+  });
+
+  // Title
+  document.getElementById('day-title').textContent = d.name;
+  document.getElementById('day-tag').textContent   = d.tag;
+
+  // GTG
+  const count  = S.gtg[S.day];
+  const target = d.gtgTarget;
+  document.getElementById('gtg-num').textContent     = count;
+  document.getElementById('gtg-target').textContent  = target || 5;
+  document.getElementById('gtg-ex').textContent      = d.gtgEx;
+  document.getElementById('gtg-card').style.opacity  = target === 0 ? '0.4' : '1';
+  renderGtgDots(count, target);
+
+  const isRest = d.theme === 'rest';
+
+  // Progress
+  document.getElementById('prog-header').style.display = isRest ? 'none' : 'block';
+  const total = d.blocks.length;
+  const done  = S.done[S.day].size;
+  document.getElementById('block-count').textContent = `${done} / ${total} done`;
+  document.getElementById('prog-fill').style.width   = total > 0 ? `${(done/total)*100}%` : '0%';
+
+  // Block list / rest card
+  document.getElementById('block-list').style.display  = isRest ? 'none' : 'flex';
+  document.getElementById('rest-card').style.display   = isRest ? 'block' : 'none';
+
+  if (!isRest) {
+    const list = document.getElementById('block-list');
+    list.innerHTML = '';
+    d.blocks.forEach((block, idx) => {
+      const isDone = S.done[S.day].has(block.id);
+      const card   = document.createElement('div');
+      card.className = 'card' + (isDone ? ' card-done' : '');
+
+      const exRows = block.exercises.map(ex => `
+        <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)">
+          <span style="display:inline-flex;align-items:center;justify-content:center;
+            min-width:24px;height:22px;padding:0 5px;
+            background:var(--p-dim);color:var(--p);
+            font-size:11px;font-weight:800;border-radius:6px">${ex.sets}×</span>
+          ${ex.name}
+        </div>`).join('');
+
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:26px;line-height:1">${block.icon}</span>
+            <div>
+              <p style="font-size:14px;font-weight:800">${block.name}</p>
+              <p class="text-m" style="font-size:11px;margin-top:2px">${block.exercises.length} exercise${block.exercises.length!==1?'s':''}</p>
+            </div>
+          </div>
+          ${isDone
+            ? `<div style="display:flex;align-items:center;gap:4px;color:var(--p)">
+                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                 <span style="font-size:11px;font-weight:800">Done</span>
+               </div>`
+            : `<button class="btn btn-primary" onclick="openBlock(${idx})" style="font-size:12px;padding:8px 14px">Start</button>`
+          }
+        </div>
+        <div style="height:1px;background:var(--border);margin-bottom:10px"></div>
+        <div style="display:flex;flex-direction:column;gap:6px">${exRows}</div>
+      `;
+      list.appendChild(card);
+    });
+  }
+}
+
+function switchDay(n) {
+  S.day = n;
+  renderHome();
+}
+
+// ═══════════════════════════════════════════════════════
+// GTG
+// ═══════════════════════════════════════════════════════
+function adjustGtg(delta) {
+  const d = DAYS[S.day];
+  if (d.gtgTarget === 0) return;
+  S.gtg[S.day] = Math.max(0, S.gtg[S.day] + delta);
+  const numEl = document.getElementById('gtg-num');
+  numEl.classList.remove('pop');
+  void numEl.offsetWidth; // force reflow
+  numEl.classList.add('pop');
+  numEl.textContent = S.gtg[S.day];
+  renderGtgDots(S.gtg[S.day], d.gtgTarget);
+}
+
+function renderGtgDots(count, target) {
+  const el = document.getElementById('gtg-dots');
+  el.innerHTML = '';
+  const total = Math.max(target || 5, count);
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'gtg-dot' + (i < count ? (i < (target||5) ? ' on' : ' ov') : '');
+    el.appendChild(dot);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// WORKOUT BLOCK
+// ═══════════════════════════════════════════════════════
+function openBlock(blockIdx) {
+  const d     = DAYS[S.day];
+  const block = d.blocks[blockIdx];
+  S.activeBlock = blockIdx;
+  stopTimer();
+
+  document.getElementById('wo-label').textContent = `${block.icon}  ${block.name}`;
+  document.getElementById('wo-name').textContent  = block.name;
+  document.getElementById('wo-sub').textContent   =
+    `${d.name} · ${d.theme[0].toUpperCase()}${d.theme.slice(1)} day`;
+
+  const container = document.getElementById('wo-exercises');
+  container.innerHTML = '';
+
+  block.exercises.forEach((ex, exIdx) => {
+    const restLabel = ex.rest === 0 ? 'No rest'
+      : ex.rest >= 60 ? `${ex.rest/60}m rest` : `${ex.rest}s rest`;
+
+    const setHdr = `
+      <div class="set-row" style="margin-bottom:4px;opacity:0.5">
+        <div></div>
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;
+          color:var(--muted);text-align:center">kg</div>
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;
+          color:var(--muted);text-align:center">Reps</div>
+        <div></div>
+      </div>`;
+
+    let rows = '';
+    for (let si = 0; si < ex.sets; si++) {
+      rows += `
+        <div class="set-row" style="margin-bottom:8px">
+          <div class="check" id="ck-${exIdx}-${si}" onclick="toggleSet(${exIdx},${si},${ex.rest})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <input class="set-input" type="text" inputmode="decimal" placeholder="—" id="w-${exIdx}-${si}">
+          <input class="set-input" type="number" inputmode="numeric" placeholder="—" id="r-${exIdx}-${si}">
+          <span style="font-size:11px;font-weight:700;color:var(--muted);text-align:center">S${si+1}</span>
+        </div>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:3px">
+        <h3 style="font-size:15px;font-weight:800;flex:1;padding-right:10px">${ex.name}</h3>
+        <span style="flex-shrink:0;font-size:11px;font-weight:800;padding:3px 10px;border-radius:99px;
+          background:var(--p-dim);color:var(--p)">${restLabel}</span>
+      </div>
+      <p class="text-m" style="font-size:12px;margin-bottom:4px">Target: ${ex.sets} × ${ex.target}</p>
+      ${ex.note ? `<div class="note">${ex.note}</div>` : ''}
+      <div style="margin-top:10px">${setHdr}${rows}</div>
+    `;
+    container.appendChild(card);
+  });
+
+  // Switch to workout screen — keep Train nav highlighted
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-workout').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-home').classList.add('active');
+  document.getElementById('s-workout').scrollTop = 0;
+}
+
+function toggleSet(exIdx, setIdx, rest) {
+  const el = document.getElementById(`ck-${exIdx}-${setIdx}`);
+  const wasDone = el.classList.contains('on');
+  el.classList.toggle('on', !wasDone);
+  if (!wasDone && rest > 0) startTimer(rest);
+}
+
+function finishBlock() {
+  const d     = DAYS[S.day];
+  const block = d.blocks[S.activeBlock];
+
+  // Collect logged data
+  const exercises = block.exercises.map((ex, exIdx) => {
+    const sets = [];
+    for (let si = 0; si < ex.sets; si++) {
+      sets.push({
+        done:   document.getElementById(`ck-${exIdx}-${si}`).classList.contains('on'),
+        weight: document.getElementById(`w-${exIdx}-${si}`).value || '—',
+        reps:   document.getElementById(`r-${exIdx}-${si}`).value || '—'
+      });
+    }
+    return { name: ex.name, sets };
+  });
+
+  S.history.unshift({
+    date:      new Date(),
+    day:       S.day,
+    dayName:   d.name,
+    blockId:   block.id,
+    blockName: block.name,
+    blockIcon: block.icon,
+    theme:     d.theme,
+    exercises,
+    totalSets: exercises.reduce((a, ex) => a + ex.sets.filter(s => s.done).length, 0)
+  });
+
+  S.done[S.day].add(block.id);
+  stopTimer();
+  navTo('home');
+}
+
+// ═══════════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════════
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (S.history.length === 0) {
+    el.innerHTML = `<p class="text-m" style="text-align:center;padding:48px 0;font-size:13px">
+      No workouts logged yet.<br>Complete a block to see it here.
+    </p>`;
+    return;
+  }
+  el.innerHTML = '';
+  S.history.forEach((entry, idx) => {
+    const dateStr = entry.date.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+    const timeStr = entry.date.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    const rows = entry.exercises.map(ex => {
+      const best = ex.sets.find(s => s.done && s.weight !== '—' && s.reps !== '—');
+      return best
+        ? `${ex.name} — <strong style="color:var(--text);font-family:monospace">${best.weight}kg × ${best.reps}</strong>`
+        : ex.name;
+    }).join('<br>');
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <p style="font-size:14px;font-weight:800">${entry.dayName}</p>
+          <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;
+            font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;
+            background:var(--p-dim);color:var(--p);margin-top:5px">
+            ${entry.blockIcon} ${entry.blockName}
+          </span>
+          <p class="text-m" style="font-size:11px;margin-top:6px">${dateStr} · ${timeStr}</p>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-icon" style="color:var(--p);background:var(--p-dim)" title="Edit">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </button>
+          <button class="btn btn-icon" onclick="deleteEntry(${idx})" title="Delete"
+            style="color:#f87171;background:rgba(248,113,113,0.1)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div style="height:1px;background:var(--border);margin-bottom:10px"></div>
+      <div class="text-m" style="font-size:12px;line-height:1.8">
+        <span class="text-p" style="font-weight:800">${entry.totalSets}</span> sets completed<br>${rows}
+      </div>
+    `;
+    el.appendChild(card);
+  });
+}
+
+function deleteEntry(idx) {
+  S.history.splice(idx, 1);
+  renderHistory();
+}
+
+// ═══════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════
+function selectLift(btn, name) {
+  document.querySelectorAll('#lift-tabs .tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('lift-name').textContent = name;
+}
+
+// ═══════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════
+const cfg = { enabled: true, startHour: 9, endHour: 18 };
+
+function fmt(h) { return String(h).padStart(2,'0') + ':00'; }
+
+function renderSettingsPreview() {
+  document.getElementById('start-val').textContent = fmt(cfg.startHour);
+  document.getElementById('end-val').textContent   = fmt(cfg.endHour);
+
+  const chips = document.getElementById('preview-chips');
+  chips.innerHTML = '';
+  for (let h = 6; h <= 22; h++) {
+    const active = h >= cfg.startHour && h <= cfg.endHour;
+    const chip = document.createElement('span');
+    chip.className = 'hour-chip' + (active ? '' : ' dim');
+    chip.textContent = fmt(h);
+    chips.appendChild(chip);
+  }
+
+  const count = Math.max(0, cfg.endHour - cfg.startHour + 1);
+  document.getElementById('preview-count').textContent =
+    `${count} reminder${count !== 1 ? 's' : ''} per training day · ${fmt(cfg.startHour)} → ${fmt(cfg.endHour)}`;
+
+  // grey out hours/days/notif cards when disabled
+  const disabled = !cfg.enabled;
+  ['hours-card','days-card','notif-card'].forEach(id => {
+    document.getElementById(id).classList.toggle('settings-disabled', disabled);
+  });
+}
+
+function adjustHour(which, delta) {
+  if (which === 'start') {
+    cfg.startHour = Math.max(5, Math.min(cfg.endHour - 1, cfg.startHour + delta));
+  } else {
+    cfg.endHour = Math.max(cfg.startHour + 1, Math.min(23, cfg.endHour + delta));
+  }
+  renderSettingsPreview();
+}
+
+function onToggleReminders(on) {
+  cfg.enabled = on;
+  renderSettingsPreview();
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+renderHome();
+renderSettingsPreview();
+</script>
+</body>
+</html>
