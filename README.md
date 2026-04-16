@@ -1,26 +1,61 @@
-# Micro-Dose Protocol Training App
+# Iron & Body Protocol
 
-A premium, localized training companion for the 4-Day Rotating Distributed Training protocol. Designed for micro-dosing your workouts across the day.
+A mobile-first training companion for the 5-day distributed micro-dose protocol. Runs as a local server so every device on your home network shares the same workout history.
 
-## How to Deploy to GitHub Pages
+## Stack
 
-1.  **Push to GitHub**:
-    - Commit `index.html`, `style.css`, and `app.js` to your repository.
-    
-2.  **Enable Pages**:
-    - Go to your Repository Settings > **Pages**.
-    - under **Build and deployment**, select **Source** -> **Deploy from a branch**.
-    - Select `main` (or `master`) branch and `/ (root)` folder.
-    - Click **Save**.
+- **Frontend**: React 18 + Vite + Tailwind CSS
+- **Backend**: Node.js + Express
+- **Storage**: `data/history.json` (file-based, no database)
 
-3.  **Visit App**:
-    - Wait about 1-2 minutes.
-    - Your app will be live at `https://<username>.github.io/<repo-name>/`.
+## Installation
+
+Requires [Node.js](https://nodejs.org) 18+.
+
+```bash
+git clone https://github.com/SexyCrowbar/training-plan.git
+cd training-plan
+npm install
+```
+
+## Launch
+
+### Development (hot reload)
+
+```bash
+npm run dev
+```
+
+Opens at `http://localhost:5173`. API calls proxy to Express on port 3001.
+
+### Production (LAN server)
+
+```bash
+npm run build
+npm start
+```
+
+The server starts on port 3000 and prints your local IP address:
+
+```
+  Iron & Body Protocol running
+  Local:   http://localhost:3000
+  Network: http://192.168.x.x:3000
+```
+
+Open the Network URL on any phone or tablet connected to the same Wi-Fi — all devices share one history file.
+
+### Windows (double-click)
+
+Run `start.bat`. It installs dependencies if needed, builds the app, and starts the server.
 
 ## Features
 
-- **Distributed Training**: Breaks training into short Morning (Power), Afternoon (Hypertrophy), and Evening (Endurance) blocks.
-- **Dual Theme System**: Automatically switches between "Iron" (Gold/Slate) and "Body" (Cyan) themes based on the day.
-- **Smart Timers**: Auto-starts rest timers appropriate for the session type (3-5m for Strength, 60s for Hypertrophy).
-- **Offline Capable**: Uses LocalStorage to save your progress and history on your device.
-- **Automated Rotation**: Automatically manages your 4-day active + 1 rest day cycle, now with manual skip buttons.
+- **5-day rotating protocol** — 4 active days (iron/body theme) + 1 full rest day
+- **Grease the Groove counter** — tracks daily sub-maximal chin-up sets with dot visualisation
+- **Three themes** — Iron (gold), Body (cyan), Rest (purple), auto-switching by day
+- **Block structure** — Morning Prep → Morning Power → Afternoon Hypertrophy → Evening Endurance
+- **Rest timer** — auto-starts between sets, duration set per exercise
+- **1RM tracking** — estimated 1-rep max chart per lift using the Epley formula
+- **Shared history** — workout log persisted to `data/history.json`, accessible from all LAN devices
+- **Screen wake lock** — keeps display on during workouts
