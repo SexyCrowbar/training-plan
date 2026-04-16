@@ -38,16 +38,28 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   const ifaces = os.networkInterfaces()
-  let localIP = 'localhost'
-  for (const iface of Object.values(ifaces)) {
-    for (const addr of iface) {
-      if (addr.family === 'IPv4' && !addr.internal) {
-        localIP = addr.address
-        break
-      }
+  const candidates = []
+  for (const [name, addrs] of Object.entries(ifaces)) {
+    for (const addr of addrs) {
+      if (addr.family !== 'IPv4' || addr.internal) continue
+      // Skip WSL/Hyper-V virtual adapters (172.16–172.31 range) and Docker bridges
+      const isVirtual = /^172\.(1[6-9]|2\d|3[01])\./.test(addr.address)
+      candidates.push({ name, address: addr.address, virtual: isVirtual })
     }
   }
+  // Prefer real adapters (Wi-Fi / Ethernet) over virtual ones
+  const best = candidates.find(c => !c.virtual) || candidates[0]
+  const localIP = best?.address ?? 'localhost'
+
   console.log(`\n  Iron & Body Protocol running`)
   console.log(`  Local:   http://localhost:${PORT}`)
-  console.log(`  Network: http://${localIP}:${PORT}\n`)
+  if (candidates.length > 1) {
+    candidates.forEach(c => {
+      const tag = c.virtual ? ' (virtual — skip)' : ' ← use this'
+      console.log(`  ${c.name.padEnd(20)} http://${c.address}:${PORT}${tag}`)
+    })
+  } else {
+    console.log(`  Network: http://${localIP}:${PORT}`)
+  }
+  console.log()
 })
