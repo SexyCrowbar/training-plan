@@ -1,5 +1,111 @@
 [
   {
+    "date": "2026-04-17T17:51:52.803Z",
+    "day": 2,
+    "dayName": "Day 2: Vertical Pull",
+    "blockId": "hypertrophy",
+    "blockName": "Afternoon Hypertrophy",
+    "blockIcon": "💪",
+    "theme": "body",
+    "exercises": [
+      {
+        "name": "EZ-Bar Curls",
+        "sets": [
+          {
+            "done": true,
+            "weight": "27",
+            "reps": "14"
+          },
+          {
+            "done": true,
+            "weight": "32",
+            "reps": "12"
+          },
+          {
+            "done": true,
+            "weight": "32",
+            "reps": "11"
+          }
+        ]
+      },
+      {
+        "name": "Ring Face Pulls",
+        "sets": [
+          {
+            "done": true,
+            "weight": "88",
+            "reps": "5"
+          },
+          {
+            "done": true,
+            "weight": "88",
+            "reps": "10"
+          },
+          {
+            "done": true,
+            "weight": "88",
+            "reps": "14"
+          }
+        ]
+      }
+    ],
+    "totalSets": 6
+  },
+  {
+    "date": "2026-04-17T13:24:28.273Z",
+    "day": 2,
+    "dayName": "Day 2: Vertical Pull",
+    "blockId": "power",
+    "blockName": "Morning Power",
+    "blockIcon": "⚡",
+    "theme": "body",
+    "exercises": [
+      {
+        "name": "Weighted Pull-Ups",
+        "sets": [
+          {
+            "done": true,
+            "weight": "88",
+            "reps": "5"
+          },
+          {
+            "done": true,
+            "weight": "88",
+            "reps": "5"
+          },
+          {
+            "done": true,
+            "weight": "88",
+            "reps": "5"
+          }
+        ]
+      }
+    ],
+    "totalSets": 3
+  },
+  {
+    "date": "2026-04-17T12:10:32.084Z",
+    "day": 2,
+    "dayName": "Day 2: Vertical Pull",
+    "blockId": "warmup",
+    "blockName": "Morning Prep",
+    "blockIcon": "🌅",
+    "theme": "body",
+    "exercises": [
+      {
+        "name": "Desk-to-Barbell Warmup",
+        "sets": [
+          {
+            "done": true,
+            "weight": "88",
+            "reps": "5"
+          }
+        ]
+      }
+    ],
+    "totalSets": 1
+  },
+  {
     "date": "2026-04-16T20:35:17.520Z",
     "day": 1,
     "dayName": "Day 1: Horizontal Push",
