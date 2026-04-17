@@ -94,6 +94,8 @@ body {
 }
 .tab.active { background: var(--p); color: #000; border-color: var(--p); }
 .tab:not(.active):hover { border-color: var(--p); color: var(--p); }
+.tab.tab-done:not(.active) { border-color: var(--p); color: var(--p); }
+.tab.tab-done.active { background: var(--p); color: #000; }
 
 /* ── PROGRESS BAR ────────────────────────────────────── */
 .prog-track { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }

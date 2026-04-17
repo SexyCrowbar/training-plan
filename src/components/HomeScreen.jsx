@@ -1,7 +1,10 @@
 import { useRef } from 'react'
 import { DAYS } from '../data/plan'
 
-export default function HomeScreen({ currentDay, onDayChange, doneBlocks, onStartBlock, gtgToday, onGtgChange }) {
+export default function HomeScreen({
+  currentDay, onDayChange, doneBlocks, allDoneBlocks, onStartBlock,
+  gtgToday, onGtgChange, weekStartDate, onStartNewWeek
+}) {
   const numRef = useRef(null)
   const d = DAYS[currentDay]
   const isRest = d.theme === 'rest'
@@ -9,6 +12,14 @@ export default function HomeScreen({ currentDay, onDayChange, doneBlocks, onStar
   const count = gtgToday?.[currentDay] || 0
   const done = doneBlocks.size
   const total = d.blocks.length
+
+  // Format week-start as "Apr 16" for the banner
+  const weekStartLabel = (() => {
+    if (!weekStartDate) return ''
+    const [y, m, day] = weekStartDate.split('-').map(Number)
+    const dt = new Date(y, m - 1, day)
+    return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  })()
 
   function adjustGtg(delta) {
     if (target === 0) return
@@ -40,20 +51,52 @@ export default function HomeScreen({ currentDay, onDayChange, doneBlocks, onStar
       </div>
 
       {/* Day tabs */}
-      <div className="tabs" style={{ marginBottom: 20 }}>
+      <div className="tabs" style={{ marginBottom: 12 }}>
         {Object.keys(DAYS).map(k => {
           const n = parseInt(k)
+          const dayDef = DAYS[n]
+          const totalN = dayDef.blocks?.length || 0
+          const doneN = allDoneBlocks?.[n]?.size || 0
+          const fullyDone = totalN > 0 && doneN >= totalN
           return (
             <button
               key={n}
-              className={`tab${n === currentDay ? ' active' : ''}`}
+              className={`tab${n === currentDay ? ' active' : ''}${fullyDone ? ' tab-done' : ''}`}
               onClick={() => onDayChange(n)}
             >
-              {dayLabel(n)}
+              <span>{dayLabel(n)}</span>
+              {fullyDone && (
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" style={{ marginLeft: 4, verticalAlign: '-1px' }}>
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              )}
             </button>
           )
         })}
       </div>
+
+      {/* Week banner */}
+      {weekStartLabel && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: 14, padding: '8px 12px',
+          background: 'var(--p-dim)', borderRadius: 10
+        }}>
+          <span className="text-m" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            Week from {weekStartLabel}
+          </span>
+          <button
+            onClick={onStartNewWeek}
+            style={{
+              fontSize: 11, fontWeight: 800, padding: '5px 10px', borderRadius: 7,
+              background: 'transparent', color: 'var(--p)', border: '1px solid var(--p)',
+              cursor: 'pointer', letterSpacing: '0.03em'
+            }}
+          >
+            New Week
+          </button>
+        </div>
+      )}
 
       {/* Day title */}
       <div style={{ marginBottom: 18 }}>
