@@ -1,0 +1,66 @@
+name: protocol
+description: "Iron/Body Protocol - training tracker"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.6.1
+
+  # Routing
+  go_router: ^14.6.2
+
+  # Database
+  drift: ^2.22.1
+  sqlite3_flutter_libs: ^0.5.24
+  path_provider: ^2.1.5
+  path: ^1.9.0
+
+
+  # Charts
+  fl_chart: ^0.69.2
+
+  # Notifications + alarms
+  flutter_local_notifications: ^18.0.1
+  android_alarm_manager_plus: ^4.0.7
+  permission_handler: ^11.3.1
+  timezone: ^0.10.0
+
+  # Misc
+  file_picker: ^8.1.4
+  wakelock_plus: ^1.2.10
+  uuid: ^4.5.1
+  intl: ^0.20.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # Codegen (Drift only — no freezed/riverpod_generator annotations in use)
+  build_runner: ^2.4.13
+  drift_dev: ^2.22.1
+
+  # Launcher icons
+  flutter_launcher_icons: ^0.14.2
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/seed/
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icons/icon.png"
+  adaptive_icon_background: "#0f1117"
+  adaptive_icon_foreground: "assets/icons/icon_foreground.png"
+  min_sdk_android: 24

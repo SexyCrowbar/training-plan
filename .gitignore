@@ -1,1 +1,47 @@
-node_modules
+# React (legacy, removed in phase 3)
+node_modules/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+pubspec.lock.backup
+
+# Build outputs
+/build/
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+
+# Android
+/android/.gradle/
+/android/captures/
+/android/gradlew
+/android/gradlew.bat
+/android/local.properties
+/android/**/GeneratedPluginRegistrant.java
+/android/key.properties
+*.jks
+*.keystore
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# Generated / codegen
+*.g.dart
+*.freezed.dart
+*.config.dart
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude worktrees
+.claude/worktrees/

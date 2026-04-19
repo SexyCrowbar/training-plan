@@ -1,0 +1,88 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'data/db/app_database.dart';
+import 'data/repositories/gtg_repository.dart';
+import 'data/repositories/settings_repository.dart';
+import 'data/repositories/template_repository.dart';
+import 'data/repositories/template_seeder.dart';
+import 'data/repositories/workout_repository.dart';
+import 'domain/plan/models.dart';
+import 'domain/plan/training_plan.dart';
+import 'domain/util/week.dart';
+
+final appDatabaseProvider = Provider<AppDatabase>((ref) {
+  final db = AppDatabase();
+  ref.onDispose(db.close);
+  return db;
+});
+
+final templateSeederProvider = Provider<TemplateSeeder>(
+  (ref) => TemplateSeeder(ref.watch(appDatabaseProvider)),
+);
+
+final templateRepositoryProvider = Provider<TemplateRepository>(
+  (ref) => TemplateRepository(ref.watch(appDatabaseProvider)),
+);
+
+final settingsRepositoryProvider = Provider<SettingsRepository>(
+  (ref) => SettingsRepository(ref.watch(appDatabaseProvider)),
+);
+
+final gtgRepositoryProvider = Provider<GtgRepository>(
+  (ref) => GtgRepository(ref.watch(appDatabaseProvider)),
+);
+
+final workoutRepositoryProvider = Provider<WorkoutRepository>(
+  (ref) => WorkoutRepository(ref.watch(appDatabaseProvider)),
+);
+
+/// Completes once first-launch seed has run.
+final seedBootProvider = FutureProvider<void>((ref) async {
+  await ref.watch(templateSeederProvider).seedIfEmpty();
+});
+
+final activeTemplateIdProvider = StreamProvider<int?>(
+  (ref) => ref.watch(settingsRepositoryProvider).watchInt(SettingsKeys.activeTemplateId),
+);
+
+final activeTemplateProvider = StreamProvider<ResolvedTemplate?>((ref) async* {
+  final id = ref.watch(activeTemplateIdProvider).valueOrNull;
+  if (id == null) {
+    yield null;
+    return;
+  }
+  yield* ref.watch(templateRepositoryProvider).watchResolved(id);
+});
+
+final allTemplatesProvider = StreamProvider<List<Template>>(
+  (ref) => ref.watch(templateRepositoryProvider).watchAll(),
+);
+
+/// Currently selected day (1..5) — UI state.
+final currentDayProvider = StateProvider<int>((ref) => 1);
+
+/// Day metadata from the static plan (name, theme, tag, gtg) — not user-editable.
+final currentDayMetaProvider = Provider<Day>((ref) {
+  final day = ref.watch(currentDayProvider);
+  return TrainingPlan.days[day]!;
+});
+
+final weekStartProvider = StreamProvider<String>((ref) async* {
+  final stream = ref.watch(settingsRepositoryProvider).watch(SettingsKeys.weekStartDate);
+  await for (final stored in stream) {
+    yield effectiveWeekStart(stored);
+  }
+});
+
+final doneBlocksProvider = StreamProvider<Map<int, Set<String>>>((ref) async* {
+  final weekStart = ref.watch(weekStartProvider).valueOrNull;
+  if (weekStart == null) {
+    yield const {};
+    return;
+  }
+  yield* ref.watch(workoutRepositoryProvider).watchDoneBlocks(weekStart);
+});
+
+final todayGtgProvider = StreamProvider<Map<int, int>>(
+  (ref) => ref.watch(gtgRepositoryProvider).watchTodayCounts(),
+);
