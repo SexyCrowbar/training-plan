@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/db/app_database.dart';
@@ -60,6 +61,14 @@ final allTemplatesProvider = StreamProvider<List<Template>>(
 
 /// Currently selected day (1..5) — UI state.
 final currentDayProvider = StateProvider<int>((ref) => 1);
+
+/// Current lifecycle state of the app — written by a WidgetsBindingObserver
+/// registered in ProtocolApp. Consumed by:
+///   * RestTimerController — to decide whether to post a background notification.
+///   * TrainScreen — to re-sync the active day when the app is resumed.
+final appLifecycleProvider = StateProvider<AppLifecycleState>(
+  (ref) => AppLifecycleState.resumed,
+);
 
 /// Day metadata from the static plan (name, theme, tag, gtg) — not user-editable.
 final currentDayMetaProvider = Provider<Day>((ref) {
