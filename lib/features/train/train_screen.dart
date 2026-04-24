@@ -12,14 +12,24 @@ import '../../widgets/day_tabs.dart';
 import '../../widgets/gtg_counter.dart';
 import '../settings/import_export_controller.dart';
 import '../templates/widgets/template_picker_sheet.dart';
-import 'train_controller.dart';
 
 class TrainScreen extends ConsumerWidget {
   const TrainScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(trainAutoAdvanceProvider);
+    // Re-sync the displayed day to today's derived day whenever the ticker
+    // fires (midnight crossing) or when the app is resumed. Manual day-tab
+    // taps between these events remain in effect.
+    ref.listen<int>(derivedDayProvider, (prev, next) {
+      ref.read(currentDayProvider.notifier).state = next;
+    });
+    ref.listen<AppLifecycleState>(appLifecycleProvider, (prev, next) {
+      if (prev != null && next == AppLifecycleState.resumed) {
+        ref.invalidate(dateTickerProvider);
+        ref.read(currentDayProvider.notifier).state = ref.read(derivedDayProvider);
+      }
+    });
 
     // historyAutoSeedProvider transitively awaits seedBootProvider, so
     // watching it covers both first-launch seeds in one boot gate.

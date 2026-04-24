@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -89,15 +91,28 @@ final weekStartProvider = StreamProvider<String>((ref) async* {
 
 /// Ticks on app start and at each local midnight. Downstream providers that
 /// watch this will recompute, which is how `derivedDayProvider` advances.
-final dateTickerProvider = StreamProvider<DateTime>((ref) async* {
-  yield DateTime.now();
-  while (true) {
+final dateTickerProvider = StreamProvider<DateTime>((ref) {
+  final controller = StreamController<DateTime>();
+  Timer? timer;
+  void scheduleNext() {
     final now = DateTime.now();
     final nextMidnight = DateTime(now.year, now.month, now.day + 1);
-    final delay = nextMidnight.difference(now);
-    await Future<void>.delayed(delay);
-    yield DateTime.now();
+    timer = Timer(nextMidnight.difference(now), () {
+      if (controller.isClosed) return;
+      controller.add(DateTime.now());
+      scheduleNext();
+    });
   }
+
+  controller.add(DateTime.now());
+  scheduleNext();
+
+  ref.onDispose(() {
+    timer?.cancel();
+    controller.close();
+  });
+
+  return controller.stream;
 });
 
 /// Day of the 5-day cycle derived from today's date relative to weekStartDate.
