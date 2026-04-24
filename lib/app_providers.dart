@@ -59,8 +59,12 @@ final allTemplatesProvider = StreamProvider<List<Template>>(
   (ref) => ref.watch(templateRepositoryProvider).watchAll(),
 );
 
-/// Currently selected day (1..5) — UI state.
-final currentDayProvider = StateProvider<int>((ref) => 1);
+/// Currently selected day (1..5). Seeded from `derivedDayProvider`; re-synced by
+/// TrainScreen on midnight ticks and on app resume. Manual day-tab taps write to
+/// `.state` directly and remain in effect until the next sync point.
+final currentDayProvider = StateProvider<int>((ref) {
+  return ref.watch(derivedDayProvider);
+});
 
 /// Current lifecycle state of the app — written by a WidgetsBindingObserver
 /// registered in ProtocolApp. Consumed by:
@@ -81,6 +85,32 @@ final weekStartProvider = StreamProvider<String>((ref) async* {
   await for (final stored in stream) {
     yield effectiveWeekStart(stored);
   }
+});
+
+/// Ticks on app start and at each local midnight. Downstream providers that
+/// watch this will recompute, which is how `derivedDayProvider` advances.
+final dateTickerProvider = StreamProvider<DateTime>((ref) async* {
+  yield DateTime.now();
+  while (true) {
+    final now = DateTime.now();
+    final nextMidnight = DateTime(now.year, now.month, now.day + 1);
+    final delay = nextMidnight.difference(now);
+    await Future<void>.delayed(delay);
+    yield DateTime.now();
+  }
+});
+
+/// Day of the 5-day cycle derived from today's date relative to weekStartDate.
+/// Clamps at 5 (rest day); after day 5 the user must tap "Start new week".
+final derivedDayProvider = Provider<int>((ref) {
+  ref.watch(dateTickerProvider);
+  final weekStart = ref.watch(weekStartProvider).valueOrNull;
+  if (weekStart == null) return 1;
+  final start = parseDateKey(weekStart);
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final diff = today.difference(start).inDays;
+  return (diff + 1).clamp(1, 5);
 });
 
 final doneBlocksProvider = StreamProvider<Map<int, Set<String>>>((ref) async* {
