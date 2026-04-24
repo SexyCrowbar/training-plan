@@ -1,7 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../app_providers.dart';
+import '../../data/repositories/settings_repository.dart';
+import '../../notifications/notification_helper.dart';
 
 class RestTimerState {
   final int remainingSeconds;
@@ -28,8 +33,9 @@ class RestTimerState {
 }
 
 class RestTimerController extends StateNotifier<RestTimerState> {
-  RestTimerController() : super(const RestTimerState.idle());
+  RestTimerController({this.onExpired}) : super(const RestTimerState.idle());
 
+  final Future<void> Function()? onExpired;
   Timer? _timer;
 
   void start(int seconds) {
@@ -49,6 +55,7 @@ class RestTimerController extends StateNotifier<RestTimerState> {
         _timer?.cancel();
         HapticFeedback.mediumImpact();
         state = state.copyWith(remainingSeconds: 0, running: false);
+        onExpired?.call();
       } else {
         state = state.copyWith(remainingSeconds: next);
       }
@@ -73,4 +80,14 @@ class RestTimerController extends StateNotifier<RestTimerState> {
 }
 
 final restTimerProvider =
-    StateNotifierProvider<RestTimerController, RestTimerState>((ref) => RestTimerController());
+    StateNotifierProvider<RestTimerController, RestTimerState>((ref) {
+  return RestTimerController(onExpired: () async {
+    final lifecycle = ref.read(appLifecycleProvider);
+    if (lifecycle == AppLifecycleState.resumed) return;
+    final enabled = await ref
+        .read(settingsRepositoryProvider)
+        .getBool(SettingsKeys.restTimerAlertEnabled, defaultValue: true);
+    if (!enabled) return;
+    await NotificationHelper.postRestTimerAlert();
+  });
+});
