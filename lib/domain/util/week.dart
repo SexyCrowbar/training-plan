@@ -9,10 +9,12 @@ String dateKey(DateTime d) {
 
 String todayKey() => dateKey(DateTime.now());
 
-/// Effective week-start: the stored value, or 6 days ago as a safe default.
+/// Effective week-start: the stored value, or today as the default.
+/// A fresh install lands on day 1 of the plan because (today - today).inDays == 0,
+/// which the derivedDayProvider clamps to day 1.
 String effectiveWeekStart(String? stored) {
   if (stored != null && stored.isNotEmpty) return stored;
-  return dateKey(DateTime.now().subtract(const Duration(days: 6)));
+  return todayKey();
 }
 
 /// Parse "YYYY-MM-DD" to a DateTime at local midnight (00:00).
