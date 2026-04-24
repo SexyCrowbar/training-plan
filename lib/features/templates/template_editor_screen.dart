@@ -28,6 +28,19 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       appBar: AppBar(
         title: Text(resolvedAsync.valueOrNull?.template.name ?? 'Template'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.check),
+            tooltip: 'Save',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Plan saved'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+              Navigator.of(context).pop();
+            },
+          ),
           PopupMenuButton<String>(
             onSelected: (v) async {
               if (v == 'reset') {

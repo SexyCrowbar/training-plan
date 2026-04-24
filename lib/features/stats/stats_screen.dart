@@ -39,30 +39,43 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           }
           _activeLift ??= lifts.first;
           final selected = lifts.contains(_activeLift) ? _activeLift! : lifts.first;
+          final scheme = Theme.of(context).colorScheme;
           return Column(
             children: [
-              SizedBox(
-                height: 44,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: lifts.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 6),
-                  itemBuilder: (context, i) {
-                    final lift = lifts[i];
-                    final active = lift == selected;
-                    final scheme = Theme.of(context).colorScheme;
-                    return ChoiceChip(
-                      label: Text(lift),
-                      selected: active,
-                      onSelected: (_) => setState(() => _activeLift = lift),
-                      selectedColor: scheme.primary,
-                      labelStyle: TextStyle(
-                        color: active ? scheme.onPrimary : scheme.onSurface,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    );
-                  },
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Exercise',
+                    isDense: true,
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: selected,
+                      isExpanded: true,
+                      items: [
+                        for (final lift in lifts)
+                          DropdownMenuItem(
+                            value: lift,
+                            child: Text(
+                              lift,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: scheme.onSurface,
+                              ),
+                            ),
+                          ),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) setState(() => _activeLift = v);
+                      },
+                    ),
+                  ),
                 ),
               ),
               Expanded(child: _LiftDetail(liftName: selected)),
