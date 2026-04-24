@@ -6,6 +6,7 @@ class SettingsKeys {
   static const remindersEnabled = 'reminders_enabled';
   static const startHour = 'start_hour';
   static const endHour = 'end_hour';
+  static const restTimerAlertEnabled = 'rest_timer_alert_enabled';
 }
 
 class SettingsRepository {
