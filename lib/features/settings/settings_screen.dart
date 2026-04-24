@@ -18,6 +18,7 @@ class SettingsScreen extends ConsumerWidget {
     final enabled = ref.watch(_remindersEnabledProvider).valueOrNull ?? false;
     final startHour = ref.watch(_startHourProvider).valueOrNull ?? 9;
     final endHour = ref.watch(_endHourProvider).valueOrNull ?? 18;
+    final restAlertEnabled = ref.watch(_restAlertEnabledProvider).valueOrNull ?? true;
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -123,6 +124,23 @@ class SettingsScreen extends ConsumerWidget {
                   },
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Card(
+            child: SwitchListTile(
+              title: const Text('Rest timer alert'),
+              subtitle: const Text(
+                'Sound + notification when rest ends (while app is backgrounded).',
+              ),
+              value: restAlertEnabled,
+              onChanged: (v) async {
+                if (v) {
+                  final granted = await NotificationHelper.requestPermissions();
+                  if (!granted) return;
+                }
+                await settings.setBool(SettingsKeys.restTimerAlertEnabled, v);
+              },
             ),
           ),
           const SizedBox(height: 10),
@@ -246,6 +264,11 @@ class SettingsScreen extends ConsumerWidget {
 
 final _remindersEnabledProvider = StreamProvider<bool>((ref) {
   return ref.watch(settingsRepositoryProvider).watchBool(SettingsKeys.remindersEnabled);
+});
+final _restAlertEnabledProvider = StreamProvider<bool>((ref) {
+  return ref
+      .watch(settingsRepositoryProvider)
+      .watchBool(SettingsKeys.restTimerAlertEnabled, defaultValue: true);
 });
 final _startHourProvider = StreamProvider<int>((ref) async* {
   final stream = ref.watch(settingsRepositoryProvider).watchInt(SettingsKeys.startHour);
