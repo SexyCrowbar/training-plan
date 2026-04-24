@@ -130,12 +130,34 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
             ),
             Padding(
               padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                '${ex.sets} × ${ex.target}  •  Rest ${ex.restSeconds}s',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: scheme.onSurface.withValues(alpha: 0.6),
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${ex.sets} × ${ex.target}  •  Rest ${ex.restSeconds}s',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: scheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  Consumer(builder: (context, ref, _) {
+                    final top = ref.watch(lastTopSetProvider(ex.name)).valueOrNull;
+                    if (top == null || top.reps == null) return const SizedBox.shrink();
+                    final w = top.weightKg;
+                    final weightLabel = (w == null || w == 0) ? 'BW' : '${_formatKg(w)} kg';
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        'Last: $weightLabel × ${top.reps}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: scheme.primary.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    );
+                  }),
+                ],
               ),
             ),
             if (ex.note.isNotEmpty)
@@ -321,4 +343,9 @@ class PrResult {
     required this.reps,
     required this.e1rm,
   });
+}
+
+String _formatKg(double kg) {
+  if (kg == kg.roundToDouble()) return kg.toInt().toString();
+  return kg.toStringAsFixed(1);
 }
