@@ -86,3 +86,12 @@ final doneBlocksProvider = StreamProvider<Map<int, Set<String>>>((ref) async* {
 final todayGtgProvider = StreamProvider<Map<int, int>>(
   (ref) => ref.watch(gtgRepositoryProvider).watchTodayCounts(),
 );
+
+/// Top set (highest weight, tie-break highest reps) from the most recent
+/// completed session for an exercise name. Used by WorkoutScreen to show a
+/// "Last: ${weight} kg × ${reps}" hint above the set inputs.
+final lastTopSetProvider = FutureProvider.family<ExerciseSet?, String>(
+  (ref, exerciseName) {
+    return ref.watch(workoutRepositoryProvider).getLastSessionTopSet(exerciseName);
+  },
+);
