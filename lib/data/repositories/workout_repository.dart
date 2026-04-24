@@ -98,6 +98,40 @@ class WorkoutRepository {
     }).toList();
   }
 
+  /// Top set (highest weight, tie-break highest reps) from the most recent
+  /// completed session for [exerciseName]. Returns null if no prior completed
+  /// set exists. Null weight is treated as 0 for sort ordering so weighted sets
+  /// always rank above bodyweight, and within all-bodyweight sessions the set
+  /// with the most reps wins.
+  Future<ExerciseSet?> getLastSessionTopSet(String exerciseName) async {
+    final newest = await (db.select(db.exerciseSets).join([
+      innerJoin(db.workoutLogs, db.workoutLogs.id.equalsExp(db.exerciseSets.logId)),
+    ])
+          ..where(db.exerciseSets.exerciseName.equals(exerciseName))
+          ..where(db.exerciseSets.completed.equals(true))
+          ..orderBy([OrderingTerm.desc(db.workoutLogs.date)])
+          ..limit(1))
+        .getSingleOrNull();
+    if (newest == null) return null;
+    final logId = newest.readTable(db.exerciseSets).logId;
+
+    final sets = await (db.select(db.exerciseSets)
+          ..where((s) => s.logId.equals(logId))
+          ..where((s) => s.exerciseName.equals(exerciseName))
+          ..where((s) => s.completed.equals(true)))
+        .get();
+    if (sets.isEmpty) return null;
+
+    sets.sort((a, b) {
+      final wA = a.weightKg ?? 0;
+      final wB = b.weightKg ?? 0;
+      final weightCmp = wB.compareTo(wA);
+      if (weightCmp != 0) return weightCmp;
+      return (b.reps ?? 0).compareTo(a.reps ?? 0);
+    });
+    return sets.first;
+  }
+
   /// Block completion by day for the current week.
   /// weekStartDate in "YYYY-MM-DD" format (local time).
   Stream<Map<int, Set<String>>> watchDoneBlocks(String weekStartDate) {
