@@ -7,6 +7,7 @@ import '../../app_providers.dart';
 import '../../data/db/app_database.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../widgets/confirm_modal.dart';
+import '../settings/import_export_controller.dart';
 
 class TemplatesScreen extends ConsumerWidget {
   const TemplatesScreen({super.key});
@@ -20,6 +21,13 @@ class TemplatesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Templates'),
+        actions: [
+          IconButton(
+            tooltip: 'Import template',
+            icon: const Icon(Icons.file_upload),
+            onPressed: () => _importTemplate(context, ref),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
@@ -111,6 +119,10 @@ class TemplatesScreen extends ConsumerWidget {
                                 value: 'duplicate',
                                 child: Text('Duplicate'),
                               ),
+                              const PopupMenuItem(
+                                value: 'export',
+                                child: Text('Export…'),
+                              ),
                               if (!active)
                                 const PopupMenuItem(
                                   value: 'delete',
@@ -148,6 +160,9 @@ class TemplatesScreen extends ConsumerWidget {
       case 'duplicate':
         await repo.duplicate(t.id, '${t.name} copy');
         break;
+      case 'export':
+        await _exportTemplate(context, ref, t);
+        break;
       case 'delete':
         final ok = await showConfirmModal(
           context: context,
@@ -168,6 +183,66 @@ class TemplatesScreen extends ConsumerWidget {
     final newId = await repo.createEmpty(name);
     if (context.mounted) context.push('/templates/$newId');
   }
+
+  Future<void> _exportTemplate(
+    BuildContext context,
+    WidgetRef ref,
+    Template t,
+  ) async {
+    final ctrl = ref.read(importExportControllerProvider);
+    try {
+      final json = await ctrl.buildTemplateJson(t.id);
+      final path = await ctrl.saveToFile(
+        suggestedName: '${_safeFileName(t.name)}.template.json',
+        content: json,
+      );
+      if (!context.mounted || path == null) return;
+      await showInfoModal(
+        context: context,
+        title: 'Exported',
+        message: 'Saved to:\n$path',
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      await showInfoModal(
+        context: context,
+        title: 'Export failed',
+        message: '$e',
+      );
+    }
+  }
+
+  Future<void> _importTemplate(BuildContext context, WidgetRef ref) async {
+    final ctrl = ref.read(importExportControllerProvider);
+    final text = await ctrl.pickJsonText();
+    if (text == null || !context.mounted) return;
+    try {
+      final newId = await ctrl.importTemplate(text);
+      if (!context.mounted) return;
+      await showInfoModal(
+        context: context,
+        title: 'Template imported',
+        message: 'A new template was added to your list.',
+      );
+      if (!context.mounted) return;
+      context.push('/templates/$newId');
+    } catch (e) {
+      if (!context.mounted) return;
+      await showInfoModal(
+        context: context,
+        title: 'Import failed',
+        message: '$e',
+      );
+    }
+  }
+}
+
+String _safeFileName(String name) {
+  final cleaned = name
+      .trim()
+      .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+      .replaceAll(RegExp(r'\s+'), '_');
+  return cleaned.isEmpty ? 'template' : cleaned;
 }
 
 Future<String?> _promptName(

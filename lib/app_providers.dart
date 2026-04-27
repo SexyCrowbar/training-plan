@@ -61,11 +61,16 @@ final allTemplatesProvider = StreamProvider<List<Template>>(
   (ref) => ref.watch(templateRepositoryProvider).watchAll(),
 );
 
-/// Currently selected day (1..5). Seeded from `derivedDayProvider`; re-synced by
-/// TrainScreen on midnight ticks and on app resume. Manual day-tab taps write to
-/// `.state` directly and remain in effect until the next sync point.
+/// Currently selected day (1..5). Seeded once from `derivedDayProvider`. After
+/// that, the value only changes via:
+///   * a manual day-tab tap (DayTabs),
+///   * a midnight crossing (derivedDayProvider listener in TrainScreen),
+///   * "Start new week" (TrainScreen sets it to 1).
+/// Lifecycle changes (app minimize / resume / app switch) MUST NOT reset it —
+/// hence `ref.read` instead of `ref.watch` so the StateProvider doesn't rebuild
+/// when derivedDay re-emits.
 final currentDayProvider = StateProvider<int>((ref) {
-  return ref.watch(derivedDayProvider);
+  return ref.read(derivedDayProvider);
 });
 
 /// Current lifecycle state of the app — written by a WidgetsBindingObserver

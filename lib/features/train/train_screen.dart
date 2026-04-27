@@ -18,16 +18,13 @@ class TrainScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Re-sync the displayed day to today's derived day whenever the ticker
-    // fires (midnight crossing) or when the app is resumed. Manual day-tab
-    // taps between these events remain in effect.
+    // Re-sync the displayed day to today's derived day only when the ticker
+    // fires (midnight crossing) or weekStart changes (Start new week). App
+    // lifecycle transitions (minimize/resume/switch) must NOT reset the day —
+    // manual day-tab taps stay in effect until one of those two events.
     ref.listen<int>(derivedDayProvider, (prev, next) {
-      ref.read(currentDayProvider.notifier).state = next;
-    });
-    ref.listen<AppLifecycleState>(appLifecycleProvider, (prev, next) {
-      if (prev != null && next == AppLifecycleState.resumed) {
-        ref.invalidate(dateTickerProvider);
-        ref.read(currentDayProvider.notifier).state = ref.read(derivedDayProvider);
+      if (prev != next) {
+        ref.read(currentDayProvider.notifier).state = next;
       }
     });
 

@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../app_providers.dart';
 import '../../data/db/app_database.dart';
@@ -12,6 +13,7 @@ import '../../data/models/history_entry.dart';
 import '../../data/models/state_snapshot.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../domain/plan/models.dart';
 
 /// Coordinates JSON import/export of history + state between the app and the
 /// file picker. Mirrors the React `data/history.json` / `data/state.json`
@@ -198,6 +200,122 @@ class ImportExportController {
       rows: rows,
       weekStartApplied: snap.weekStartDate != null,
     );
+  }
+
+  // --- TEMPLATE EXPORT / IMPORT ---
+
+  /// Serialize a single template (blocks + exercises) to a self-contained JSON
+  /// document. The format is independent of internal row ids.
+  Future<String> buildTemplateJson(int templateId) async {
+    final template = await (_db.select(_db.templates)
+          ..where((t) => t.id.equals(templateId)))
+        .getSingleOrNull();
+    if (template == null) {
+      throw StateError('Template $templateId not found.');
+    }
+    final blocks = await (_db.select(_db.templateBlocks)
+          ..where((b) => b.templateId.equals(templateId)))
+        .get();
+    final blocksJson = <Map<String, dynamic>>[];
+    for (final b in blocks) {
+      final exs = await (_db.select(_db.templateExercises)
+            ..where((e) => e.blockRefId.equals(b.id))
+            ..orderBy([(e) => OrderingTerm.asc(e.position)]))
+          .get();
+      blocksJson.add({
+        'dayId': b.dayId,
+        'blockId': b.blockId,
+        'exercises': [
+          for (final e in exs)
+            {
+              'name': e.name,
+              'sets': e.sets,
+              'target': e.target,
+              'restSeconds': e.restSeconds,
+              'note': e.note,
+            },
+        ],
+      });
+    }
+    return const JsonEncoder.withIndent('  ').convert({
+      'kind': 'protocol.template',
+      'version': 1,
+      'name': template.name,
+      'exportedAt': DateTime.now().millisecondsSinceEpoch,
+      'blocks': blocksJson,
+    });
+  }
+
+  /// Create a new template from an exported JSON document. Returns the new
+  /// template's id. Always inserts a fresh row — never overwrites an existing
+  /// template.
+  Future<int> importTemplate(String jsonText) async {
+    final raw = jsonDecode(jsonText);
+    if (raw is! Map<String, dynamic>) {
+      throw const FormatException('Expected a template export JSON object.');
+    }
+    final kind = raw['kind'];
+    if (kind != null && kind != 'protocol.template') {
+      throw const FormatException('Not a template export file.');
+    }
+    final blocksRaw = raw['blocks'];
+    if (blocksRaw is! List) {
+      throw const FormatException('Template export missing "blocks" array.');
+    }
+    final name = (raw['name'] as String?)?.trim();
+    final templateName = (name == null || name.isEmpty) ? 'Imported template' : name;
+    const uuid = Uuid();
+
+    return await _db.transaction(() async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final newId = await _db.into(_db.templates).insert(
+            TemplatesCompanion.insert(
+              name: templateName,
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      final byKey = <String, int>{};
+      for (var dayId = 1; dayId <= 5; dayId++) {
+        for (final blockId in kBlockIds) {
+          final blockRefId = await _db.into(_db.templateBlocks).insert(
+                TemplateBlocksCompanion.insert(
+                  templateId: newId,
+                  dayId: dayId,
+                  blockId: blockId,
+                ),
+              );
+          byKey['$dayId/$blockId'] = blockRefId;
+        }
+      }
+      for (final blockJson in blocksRaw) {
+        if (blockJson is! Map<String, dynamic>) continue;
+        final dayId = blockJson['dayId'];
+        final blockId = blockJson['blockId'];
+        if (dayId is! int || blockId is! String) continue;
+        final blockRefId = byKey['$dayId/$blockId'];
+        if (blockRefId == null) continue;
+        final exs = blockJson['exercises'];
+        if (exs is! List) continue;
+        var pos = 0;
+        for (final ex in exs) {
+          if (ex is! Map<String, dynamic>) continue;
+          await _db.into(_db.templateExercises).insert(
+                TemplateExercisesCompanion.insert(
+                  blockRefId: blockRefId,
+                  position: pos++,
+                  exerciseId: uuid.v4(),
+                  name: (ex['name'] as String?) ?? '',
+                  sets: (ex['sets'] as num?)?.toInt() ?? 1,
+                  target: (ex['target'] as String?) ?? '',
+                  restSeconds: (ex['restSeconds'] as num?)?.toInt() ?? 60,
+                  note: Value((ex['note'] as String?) ?? ''),
+                ),
+              );
+        }
+      }
+      return newId;
+    });
   }
 
   /// First-launch seeding of workout history from the bundled asset. No-op if
