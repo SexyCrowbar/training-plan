@@ -81,12 +81,12 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  itemCount: 5,
+                  itemCount: 7,
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
                   itemBuilder: (context, i) {
                     final dayId = i + 1;
                     final selected = dayId == _selectedDay;
-                    final label = dayId == 5 ? 'Rest' : 'Day $dayId';
+                    final label = dayId == 7 ? 'Rest' : 'Day $dayId';
                     return GestureDetector(
                       onTap: () => setState(() => _selectedDay = dayId),
                       child: AnimatedContainer(

@@ -15,12 +15,12 @@ class DayTabs extends ConsumerWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: 5,
+        itemCount: 7,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final dayId = i + 1;
           final selected = dayId == current;
-          final label = dayId == 5 ? 'Rest' : 'Day $dayId';
+          final label = dayId == 7 ? 'Rest' : 'Day $dayId';
           return GestureDetector(
             onTap: () => ref.read(currentDayProvider.notifier).state = dayId,
             child: AnimatedContainer(

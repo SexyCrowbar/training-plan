@@ -40,6 +40,10 @@ class TrainScreen extends ConsumerWidget {
     final activeId = ref.watch(activeTemplateIdProvider).valueOrNull;
     final meta = ref.watch(currentDayMetaProvider);
     final done = ref.watch(doneBlocksProvider).valueOrNull?[meta.id] ?? const <String>{};
+    final populatedBlocks = [
+      for (final b in kBlockIds)
+        if ((template?.exercisesFor(meta.id, b) ?? const []).isNotEmpty) b,
+    ];
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -108,14 +112,29 @@ class TrainScreen extends ConsumerWidget {
                   ),
                 ),
               )
+            else if (populatedBlocks.isEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Active recovery — walk, stretch, light mobility.\n'
+                    'Keep your GtG sets going, but nothing to log today.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: scheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ),
+              )
             else
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverList.separated(
-                  itemCount: kBlockIds.length,
+                  itemCount: populatedBlocks.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, i) {
-                    final blockId = kBlockIds[i];
+                    final blockId = populatedBlocks[i];
                     final exercises = template?.exercisesFor(meta.id, blockId) ?? const [];
                     return BlockCard(
                       blockId: blockId,
@@ -132,7 +151,7 @@ class TrainScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Start new week'),
+                  label: const Text('Restart cycle (Day 1 today)'),
                   onPressed: () => _startNewWeek(context, ref, templates, activeId),
                 ),
               ),
@@ -251,13 +270,13 @@ class _NewWeekDialogState extends State<_NewWeekDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Start a new week?'),
+      title: const Text('Restart the cycle?'),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text(
-            'Block checkmarks reset. Workout history is kept.',
+            'Resets to Day 1 today. Block checkmarks reset; workout history is kept.',
           ),
           const SizedBox(height: 16),
           const Text(
