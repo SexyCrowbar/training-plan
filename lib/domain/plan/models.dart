@@ -1,4 +1,4 @@
-enum DayTheme { iron, body, rest }
+enum DayTheme { iron, body, recovery, rest }
 
 class Exercise {
   final String name;
