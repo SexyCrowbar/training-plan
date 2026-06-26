@@ -1,6 +1,6 @@
 # Protocol
 
-Native Android app for the 5-day distributed micro-dose training protocol. Flutter-based, fully offline, with optional hourly Grease-the-Groove reminders.
+Native Android app for the 7-day distributed micro-dose training protocol. Flutter-based, fully offline, with optional hourly Grease-the-Groove reminders.
 
 ## Stack
 
@@ -57,10 +57,10 @@ dart run flutter_launcher_icons
 
 ## Features
 
-- **5-day rotating protocol** — 4 active days + 1 full rest day, theme-per-day (iron/body/rest)
+- **7-day rotating protocol** — 4 training days + 2 active-recovery days + 1 full rest day, auto-wrapping; theme-per-day (iron/body/recovery/rest)
 - **Editable templates** — create / duplicate / rename / delete named templates; each week points to an active template. "Default" is seeded from the stock plan and is resettable.
 - **Grease-the-Groove counter** — per-day sub-maximal set tally that resets at midnight
-- **GTG hourly reminders** — exact-alarm notifications within a configurable active window, automatically suppressed on rest days and re-armed after reboot
+- **GTG hourly reminders** — exact-alarm notifications within a configurable active window, automatically suppressed on the full rest day and re-armed after reboot
 - **Rest timer** — auto-starts on set-complete; per-exercise duration
 - **e1RM tracking** — estimated 1-rep max per lift, Epley formula, chart + recent-sessions view
 - **History snapshot** — workout logs preserve block + exercise names at save time, so editing a template never rewrites past sessions

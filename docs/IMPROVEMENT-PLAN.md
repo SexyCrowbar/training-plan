@@ -13,7 +13,7 @@
 ## Priority tiers
 
 **P0 — data safety & the core promise** (do these first)
-- [ ] **T1** Unify the day model (reminders fire on the *correct* rest day)
+- [x] **T1** Unify the day model (reminders fire on the *correct* rest day) — ✅ delivered by the 7-day schedule on branch `feat/seven-day-schedule`
 - [ ] **T2** GTG midnight reset + day re-sync on resume
 - [ ] **T3** Guard `saveWorkout` so a finished block is never silently lost
 - [ ] **T4** Drift migration safety net + indices (before any schema v2)
