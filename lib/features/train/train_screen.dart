@@ -40,6 +40,9 @@ class TrainScreen extends ConsumerWidget {
     final activeId = ref.watch(activeTemplateIdProvider).valueOrNull;
     final meta = ref.watch(currentDayMetaProvider);
     final done = ref.watch(doneBlocksProvider).valueOrNull?[meta.id] ?? const <String>{};
+    // Blocks that have at least one exercise. Doubles as the recovery-day
+    // detector: when this is empty on a non-rest day (e.g. Day 6), the screen
+    // shows an active-recovery note instead of block cards.
     final populatedBlocks = [
       for (final b in kBlockIds)
         if ((template?.exercisesFor(meta.id, b) ?? const []).isNotEmpty) b,

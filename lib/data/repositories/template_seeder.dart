@@ -36,16 +36,21 @@ class TemplateSeeder {
     final stored = await _settingInt('plan_version') ?? 0;
     if (stored >= currentPlanVersion) return;
 
-    // Wipe templates (and their blocks/exercises) explicitly — does not depend
-    // on FK cascade being enabled.
-    await db.delete(db.templateExercises).go();
-    await db.delete(db.templateBlocks).go();
-    await db.delete(db.templates).go();
+    // Atomic: the wipe, reseed, and version stamp commit together, so a kill
+    // mid-migration leaves the prior state intact and the next boot retries
+    // cleanly. (createTemplateFromPlan opens a nested savepoint — supported.)
+    await db.transaction(() async {
+      // Wipe templates (and their blocks/exercises) explicitly — does not depend
+      // on FK cascade being enabled.
+      await db.delete(db.templateExercises).go();
+      await db.delete(db.templateBlocks).go();
+      await db.delete(db.templates).go();
 
-    final templateId = await createTemplateFromPlan('Default');
-    await _setSetting('active_template_id', templateId.toString());
-    await _setSetting('weekStartDate', todayKey());
-    await _setSetting('plan_version', currentPlanVersion.toString());
+      final templateId = await createTemplateFromPlan('Default');
+      await _setSetting('active_template_id', templateId.toString());
+      await _setSetting('weekStartDate', todayKey());
+      await _setSetting('plan_version', currentPlanVersion.toString());
+    });
   }
 
   /// Creates a new template populated from TrainingPlan.days.
