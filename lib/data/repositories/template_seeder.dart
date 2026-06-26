@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../domain/plan/models.dart';
 import '../../domain/plan/training_plan.dart';
+import '../../domain/util/week.dart';
 import '../db/app_database.dart';
 
 class TemplateSeeder {
@@ -11,18 +12,40 @@ class TemplateSeeder {
 
   TemplateSeeder(this.db);
 
-  /// Idempotent. If any template exists, does nothing.
-  /// Otherwise creates "Default" from TrainingPlan and sets it active.
-  Future<void> seedIfEmpty() async {
-    final existing = await db.select(db.templates).get();
-    if (existing.isNotEmpty) return;
-    final templateId = await createTemplateFromPlan('Default');
+  /// Current plan-data version. Bump when the canonical 7-day plan or day
+  /// numbering changes in a way that must overwrite users' seeded templates.
+  static const currentPlanVersion = 1;
+
+  Future<int?> _settingInt(String key) async {
+    final row = await (db.select(db.appSettings)..where((s) => s.key.equals(key)))
+        .getSingleOrNull();
+    return int.tryParse(row?.value ?? '');
+  }
+
+  Future<void> _setSetting(String key, String value) async {
     await db.into(db.appSettings).insertOnConflictUpdate(
-          AppSettingsCompanion.insert(
-            key: 'active_template_id',
-            value: templateId.toString(),
-          ),
+          AppSettingsCompanion.insert(key: key, value: value),
         );
+  }
+
+  /// Run once per plan version. On a fresh install this seeds the 7-day Default.
+  /// On upgrade from an older plan version it WIPES all templates and reseeds
+  /// Default (Option C), then re-anchors the cycle to today. Workout history and
+  /// GTG logs are never touched. Idempotent: a no-op once stamped current.
+  Future<void> seedOrMigrate() async {
+    final stored = await _settingInt('plan_version') ?? 0;
+    if (stored >= currentPlanVersion) return;
+
+    // Wipe templates (and their blocks/exercises) explicitly — does not depend
+    // on FK cascade being enabled.
+    await db.delete(db.templateExercises).go();
+    await db.delete(db.templateBlocks).go();
+    await db.delete(db.templates).go();
+
+    final templateId = await createTemplateFromPlan('Default');
+    await _setSetting('active_template_id', templateId.toString());
+    await _setSetting('weekStartDate', todayKey());
+    await _setSetting('plan_version', currentPlanVersion.toString());
   }
 
   /// Creates a new template populated from TrainingPlan.days.

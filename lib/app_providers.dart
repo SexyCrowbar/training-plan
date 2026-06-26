@@ -41,7 +41,7 @@ final workoutRepositoryProvider = Provider<WorkoutRepository>(
 
 /// Completes once first-launch seed has run.
 final seedBootProvider = FutureProvider<void>((ref) async {
-  await ref.watch(templateSeederProvider).seedIfEmpty();
+  await ref.watch(templateSeederProvider).seedOrMigrate();
 });
 
 final activeTemplateIdProvider = StreamProvider<int?>(
