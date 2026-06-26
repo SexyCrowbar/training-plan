@@ -7,6 +7,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../data/db/app_database.dart';
 import '../data/repositories/settings_repository.dart';
+import '../domain/plan/training_plan.dart';
+import '../domain/util/week.dart';
 import 'notification_helper.dart';
 
 const int _alarmId = 42001;
@@ -67,13 +69,11 @@ class ReminderScheduler {
     return nextHour;
   }
 
-  /// Determine which day of the 5-day rotation today is.
-  /// Simple calendar-based: dayId = ((daysSinceEpoch) % 5) + 1.
-  /// Day 5 is rest day.
-  static int currentRotationDayId(DateTime now) {
-    final daysSinceEpoch = now.toUtc().difference(DateTime.utc(1970, 1, 1)).inDays;
-    return (daysSinceEpoch % 5) + 1;
-  }
+  /// Day of the 7-day cycle for [now], anchored to the stored [weekStart] key
+  /// ("YYYY-MM-DD"). Same math as the UI's derivedDayProvider, so reminders and
+  /// the displayed day always agree on which day is the rest day.
+  static int rotationDayId(DateTime now, String weekStart) =>
+      dayOfCycle(now, parseDateKey(weekStart));
 }
 
 /// Top-level callback required by android_alarm_manager_plus — runs in a
@@ -95,7 +95,9 @@ Future<void> _alarmCallback() async {
 
     final now = DateTime.now();
     final withinWindow = now.hour >= startHour && now.hour < endHour;
-    final isRestDay = ReminderScheduler.currentRotationDayId(now) == 5;
+    final weekStart = effectiveWeekStart(await settings.get(SettingsKeys.weekStartDate));
+    final dayId = ReminderScheduler.rotationDayId(now, weekStart);
+    final isRestDay = (TrainingPlan.days[dayId]?.gtgTarget ?? 0) == 0;
 
     if (withinWindow && !isRestDay) {
       await NotificationHelper.initialize();
