@@ -15,6 +15,10 @@ class AppColors {
   static const restSurface = Color(0xFF1C1D2E);
   static const restBackground = Color(0xFF0F1019);
 
+  static const recoveryPrimary = Color(0xFF34D399);
+  static const recoverySurface = Color(0xFF0E2A22);
+  static const recoveryBackground = Color(0xFF08160F);
+
   static const onSurfaceHi = Color(0xFFE5E7EB);
   static const onSurfaceMid = Color(0xFF94A3B8);
   static const onSurfaceLow = Color(0xFF475569);
@@ -46,6 +50,18 @@ ColorScheme _schemeFor(DayTheme theme) {
         error: const Color(0xFFEF4444),
         onError: Colors.white,
       );
+    case DayTheme.recovery:
+      return ColorScheme.dark(
+        primary: AppColors.recoveryPrimary,
+        onPrimary: const Color(0xFF052E22),
+        surface: AppColors.recoverySurface,
+        onSurface: AppColors.onSurfaceHi,
+        surfaceContainerHighest: const Color(0xFF143A2E),
+        secondary: AppColors.recoveryPrimary,
+        onSecondary: const Color(0xFF052E22),
+        error: const Color(0xFFEF4444),
+        onError: Colors.white,
+      );
     case DayTheme.rest:
       return ColorScheme.dark(
         primary: AppColors.restPrimary,
@@ -66,6 +82,7 @@ ThemeData buildTheme(DayTheme theme) {
   final bg = switch (theme) {
     DayTheme.iron => AppColors.ironBackground,
     DayTheme.body => AppColors.bodyBackground,
+    DayTheme.recovery => AppColors.recoveryBackground,
     DayTheme.rest => AppColors.restBackground,
   };
   return ThemeData(
