@@ -276,7 +276,7 @@ class ImportExportController {
             ),
           );
       final byKey = <String, int>{};
-      for (var dayId = 1; dayId <= 5; dayId++) {
+      for (var dayId = 1; dayId <= 7; dayId++) {
         for (final blockId in kBlockIds) {
           final blockRefId = await _db.into(_db.templateBlocks).insert(
                 TemplateBlocksCompanion.insert(

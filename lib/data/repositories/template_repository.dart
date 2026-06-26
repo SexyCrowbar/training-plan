@@ -82,7 +82,7 @@ class TemplateRepository {
       final id = await db.into(db.templates).insert(
             TemplatesCompanion.insert(name: name, createdAt: now, updatedAt: now),
           );
-      for (var dayId = 1; dayId <= 5; dayId++) {
+      for (var dayId = 1; dayId <= 7; dayId++) {
         for (final blockId in kBlockIds) {
           await db.into(db.templateBlocks).insert(
                 TemplateBlocksCompanion.insert(
