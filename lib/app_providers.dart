@@ -120,17 +120,16 @@ final dateTickerProvider = StreamProvider<DateTime>((ref) {
   return controller.stream;
 });
 
-/// Day of the 5-day cycle derived from today's date relative to weekStartDate.
-/// Clamps at 5 (rest day); after day 5 the user must tap "Start new week".
+/// Day of the 7-day cycle derived from today's date relative to weekStartDate.
+/// Wraps continuously (day 8 == day 1) via the shared [dayOfCycle] helper, which
+/// the GTG reminder callback also uses — so the UI and reminders always agree on
+/// which day is which.
 final derivedDayProvider = Provider<int>((ref) {
   ref.watch(dateTickerProvider);
   final weekStart = ref.watch(weekStartProvider).valueOrNull;
   if (weekStart == null) return 1;
-  final start = parseDateKey(weekStart);
   final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final diff = today.difference(start).inDays;
-  return (diff + 1).clamp(1, 5);
+  return dayOfCycle(now, parseDateKey(weekStart));
 });
 
 final doneBlocksProvider = StreamProvider<Map<int, Set<String>>>((ref) async* {

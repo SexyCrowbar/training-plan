@@ -19,28 +19,26 @@ void main() {
       expect(container.read(derivedDayProvider), 1);
     });
 
-    test('returns (diff + 1) when weekStart is N days ago, clamped to 5', () async {
+    test('counts up over the 7-day cycle and wraps', () async {
       final now = DateTime.now();
-      final threeDaysAgo = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 3));
-      final sevenDaysAgo = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 7));
+      DateTime ago(int days) =>
+          DateTime(now.year, now.month, now.day).subtract(Duration(days: days));
 
-      final c3 = ProviderContainer(overrides: [
-        weekStartProvider.overrideWith((ref) async* {
-          yield dateKey(threeDaysAgo);
-        }),
-      ]);
-      addTearDown(c3.dispose);
-      await c3.read(weekStartProvider.future);
-      expect(c3.read(derivedDayProvider), 4);
+      Future<int> dayFor(DateTime weekStart) async {
+        final c = ProviderContainer(overrides: [
+          weekStartProvider.overrideWith((ref) async* {
+            yield dateKey(weekStart);
+          }),
+        ]);
+        addTearDown(c.dispose);
+        await c.read(weekStartProvider.future);
+        return c.read(derivedDayProvider);
+      }
 
-      final c7 = ProviderContainer(overrides: [
-        weekStartProvider.overrideWith((ref) async* {
-          yield dateKey(sevenDaysAgo);
-        }),
-      ]);
-      addTearDown(c7.dispose);
-      await c7.read(weekStartProvider.future);
-      expect(c7.read(derivedDayProvider), 5);
+      expect(await dayFor(ago(3)), 4); // day 4 (recovery)
+      expect(await dayFor(ago(6)), 7); // day 7 (rest)
+      expect(await dayFor(ago(7)), 1); // wraps to day 1
+      expect(await dayFor(ago(13)), 7);
     });
   });
 }
