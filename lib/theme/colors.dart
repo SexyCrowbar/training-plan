@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../domain/plan/models.dart';
+import 'tokens.dart';
 
 class AppColors {
   static const ironPrimary = Color(0xFFF0C040);
@@ -121,7 +122,9 @@ ThemeData buildTheme(DayTheme theme) {
       color: scheme.surface,
       elevation: 0,
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.card),
+      ),
     ),
     dividerTheme: DividerThemeData(
       color: scheme.onSurface.withValues(alpha: 0.08),
@@ -132,12 +135,13 @@ ThemeData buildTheme(DayTheme theme) {
       filled: true,
       fillColor: scheme.surfaceContainerHighest,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(Radii.field),
         borderSide: BorderSide.none,
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
     ),
     textTheme: const TextTheme(
+      displayLarge: TextStyle(fontSize: 44, fontWeight: FontWeight.w900),
       headlineLarge: TextStyle(
         fontSize: 22,
         fontWeight: FontWeight.w900,

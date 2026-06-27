@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_providers.dart';
+import '../theme/tokens.dart';
 
 class DayTabs extends ConsumerWidget {
   const DayTabs({super.key});
@@ -14,9 +15,9 @@ class DayTabs extends ConsumerWidget {
       height: 48,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
         itemCount: 7,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: Spacing.sm),
         itemBuilder: (context, i) {
           final dayId = i + 1;
           final selected = dayId == current;
@@ -25,10 +26,13 @@ class DayTabs extends ConsumerWidget {
             onTap: () => ref.read(currentDayProvider.notifier).state = dayId,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.lg,
+                vertical: Spacing.md,
+              ),
               decoration: BoxDecoration(
                 color: selected ? scheme.primary : scheme.surface,
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(Radii.pill),
                 border: Border.all(
                   color: selected
                       ? scheme.primary

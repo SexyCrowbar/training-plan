@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_providers.dart';
 import '../theme/colors.dart';
+import '../theme/tokens.dart';
 
 class GtgCounter extends ConsumerWidget {
   const GtgCounter({super.key});
@@ -19,7 +20,7 @@ class GtgCounter extends ConsumerWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Spacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -54,22 +55,21 @@ class GtgCounter extends ConsumerWidget {
                           gtg.adjust(meta.id, -1);
                         },
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: Spacing.lg),
                 Expanded(
                   child: Column(
                     children: [
                       Text(
                         '$count',
-                        style: TextStyle(
-                          fontSize: 44,
-                          fontWeight: FontWeight.w900,
-                          color: disabled
-                              ? scheme.onSurface.withValues(alpha: 0.3)
-                              : scheme.primary,
-                          height: 1,
-                        ),
+                        style: Theme.of(context).textTheme.displayLarge!
+                            .copyWith(
+                              color: disabled
+                                  ? scheme.onSurface.withValues(alpha: 0.3)
+                                  : scheme.primary,
+                              height: 1,
+                            ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: Spacing.xs),
                       if (meta.gtgTarget > 0)
                         Wrap(
                           spacing: 4,
@@ -92,7 +92,7 @@ class GtgCounter extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: Spacing.lg),
                 _RoundButton(
                   icon: Icons.add,
                   onTap: disabled

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/db/app_database.dart';
 import '../domain/plan/models.dart';
 import '../theme/colors.dart';
+import '../theme/tokens.dart';
 
 class BlockCard extends StatelessWidget {
   final String blockId;
@@ -34,21 +35,21 @@ class BlockCard extends StatelessWidget {
 
     return Material(
       color: cardBg,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(Radii.card),
       child: InkWell(
         onTap: empty ? null : onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.card),
         child: Container(
           decoration: done
               ? BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(Radii.card),
                   border: Border.all(
                     color: scheme.primary.withValues(alpha: 0.4),
                   ),
                 )
               : null,
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Spacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -87,12 +88,12 @@ class BlockCard extends StatelessWidget {
                     if (done)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: Spacing.sm,
+                          vertical: Spacing.xs,
                         ),
                         decoration: BoxDecoration(
                           color: scheme.primary.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(Radii.chip),
                         ),
                         child: Text(
                           'DONE',
