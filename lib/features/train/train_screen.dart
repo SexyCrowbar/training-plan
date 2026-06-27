@@ -7,6 +7,7 @@ import '../../data/db/app_database.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../domain/plan/models.dart';
 import '../../domain/util/week.dart';
+import '../../theme/colors.dart';
 import '../../widgets/block_card.dart';
 import '../../widgets/day_tabs.dart';
 import '../../widgets/gtg_counter.dart';
@@ -132,7 +133,42 @@ class TrainScreen extends ConsumerWidget {
                   ),
                 ),
               )
-            else
+            else ...[
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverToBoxAdapter(
+                  child: Builder(
+                    builder: (context) {
+                      final doneCount = populatedBlocks
+                          .where(done.contains)
+                          .length;
+                      final total = populatedBlocks.length;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$doneCount / $total done',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: scheme.textMid,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          LinearProgressIndicator(
+                            value: total == 0 ? 0 : doneCount / total,
+                            minHeight: 4,
+                            color: scheme.primary,
+                            backgroundColor: scheme.primary.withValues(
+                              alpha: 0.15,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverList.separated(
@@ -151,6 +187,7 @@ class TrainScreen extends ConsumerWidget {
                   },
                 ),
               ),
+            ],
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
             SliverToBoxAdapter(
               child: Padding(

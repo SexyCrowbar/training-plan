@@ -22,6 +22,8 @@ class AppColors {
   static const onSurfaceHi = Color(0xFFE5E7EB);
   static const onSurfaceMid = Color(0xFF94A3B8);
   static const onSurfaceLow = Color(0xFF475569);
+
+  static const gtgOverflow = Color(0xFF4ADE80);
 }
 
 /// Semantic muted-text tokens. Use instead of ad-hoc onSurface.withValues(alpha:)

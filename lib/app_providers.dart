@@ -156,11 +156,8 @@ final todayGtgProvider = StreamProvider<Map<int, int>>((ref) {
 /// Top set (highest weight, tie-break highest reps) from the most recent
 /// completed session for an exercise name. Used by WorkoutScreen to show a
 /// "Last: ${weight} kg × ${reps}" hint above the set inputs.
-final lastTopSetProvider =
-    FutureProvider.autoDispose.family<ExerciseSet?, String>((
-      ref,
-      exerciseName,
-    ) {
+final lastTopSetProvider = FutureProvider.autoDispose
+    .family<ExerciseSet?, String>((ref, exerciseName) {
       return ref
           .watch(workoutRepositoryProvider)
           .getLastSessionTopSet(exerciseName);
@@ -170,11 +167,8 @@ final lastTopSetProvider =
 /// `(exerciseId, exerciseName)` record. When [exerciseId] is non-empty the
 /// lookup joins history by stable id (with a name fallback for legacy rows),
 /// so the "Last: …" hint survives exercise renames.
-final lastTopSetByIdProvider =
-    FutureProvider.autoDispose.family<
-      ExerciseSet?,
-      (String exerciseId, String exerciseName)
-    >((ref, key) {
+final lastTopSetByIdProvider = FutureProvider.autoDispose
+    .family<ExerciseSet?, (String exerciseId, String exerciseName)>((ref, key) {
       return ref
           .watch(workoutRepositoryProvider)
           .getLastSessionTopSet(key.$2, exerciseId: key.$1);

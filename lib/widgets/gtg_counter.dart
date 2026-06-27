@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_providers.dart';
+import '../theme/colors.dart';
 
 class GtgCounter extends ConsumerWidget {
   const GtgCounter({super.key});
@@ -73,13 +74,15 @@ class GtgCounter extends ConsumerWidget {
                         Wrap(
                           spacing: 4,
                           children: List.generate(
-                            meta.gtgTarget,
+                            count > meta.gtgTarget ? count : meta.gtgTarget,
                             (i) => Container(
                               width: 8,
                               height: 8,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: i < count
+                                color: i >= meta.gtgTarget
+                                    ? AppColors.gtgOverflow
+                                    : i < count
                                     ? scheme.primary
                                     : scheme.onSurface.withValues(alpha: 0.2),
                               ),
