@@ -42,7 +42,9 @@ class ImportExportController {
         HistoryEntry(
           date: DateTime.fromMillisecondsSinceEpoch(log.date),
           day: log.dayId,
-          dayName: TrainingPlan.days[log.dayId]?.name ?? '', // canonical day name (not persisted on the log)
+          dayName:
+              TrainingPlan.days[log.dayId]?.name ??
+              '', // canonical day name (not persisted on the log)
           blockId: log.blockId,
           blockName: log.blockName,
           blockIcon: log.blockIcon,
@@ -64,8 +66,9 @@ class ImportExportController {
         ),
       );
     }
-    return const JsonEncoder.withIndent('  ')
-        .convert([for (final e in entries) e.toJson()]);
+    return const JsonEncoder.withIndent(
+      '  ',
+    ).convert([for (final e in entries) e.toJson()]);
   }
 
   /// Serialize GTG counts + week-start to the `state.json` shape.
@@ -171,7 +174,9 @@ class ImportExportController {
   Future<ImportStateStats> importState(String jsonText) async {
     final raw = jsonDecode(jsonText);
     if (raw is! Map<String, dynamic>) {
-      throw const FormatException('Expected a JSON object matching state.json.');
+      throw const FormatException(
+        'Expected a JSON object matching state.json.',
+      );
     }
     final snap = StateSnapshot.fromJson(raw);
     int rows = 0;
@@ -244,7 +249,9 @@ class ImportExportController {
       throw const FormatException('Template export missing "blocks" array.');
     }
     final name = (raw['name'] as String?)?.trim();
-    final templateName = (name == null || name.isEmpty) ? 'Imported template' : name;
+    final templateName = (name == null || name.isEmpty)
+        ? 'Imported template'
+        : name;
 
     final blocksSpec = [
       for (final b in blocksRaw)

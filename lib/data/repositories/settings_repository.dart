@@ -15,13 +15,16 @@ class SettingsRepository {
   SettingsRepository(this.db);
 
   Future<String?> get(String key) async {
-    final row =
-        await (db.select(db.appSettings)..where((s) => s.key.equals(key))).getSingleOrNull();
+    final row = await (db.select(
+      db.appSettings,
+    )..where((s) => s.key.equals(key))).getSingleOrNull();
     return row?.value;
   }
 
   Future<void> set(String key, String value) async {
-    await db.into(db.appSettings).insertOnConflictUpdate(
+    await db
+        .into(db.appSettings)
+        .insertOnConflictUpdate(
           AppSettingsCompanion.insert(key: key, value: value),
         );
   }
@@ -48,8 +51,10 @@ class SettingsRepository {
     return v == 'true' ? true : (v == 'false' ? false : defaultValue);
   }
 
-  Stream<bool> watchBool(String key, {bool defaultValue = false}) =>
-      watch(key).map((v) => v == 'true' ? true : (v == 'false' ? false : defaultValue));
+  Stream<bool> watchBool(String key, {bool defaultValue = false}) => watch(
+    key,
+  ).map((v) => v == 'true' ? true : (v == 'false' ? false : defaultValue));
 
-  Future<void> setBool(String key, bool value) => set(key, value ? 'true' : 'false');
+  Future<void> setBool(String key, bool value) =>
+      set(key, value ? 'true' : 'false');
 }

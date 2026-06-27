@@ -39,7 +39,8 @@ void main() {
       expect(
         _contrast(blended, theme.colorScheme.surface),
         lessThan(4.5),
-        reason: 'alpha:0.35 blend should fail WCAG AA — verifying old code was broken',
+        reason:
+            'alpha:0.35 blend should fail WCAG AA — verifying old code was broken',
       );
     });
   });

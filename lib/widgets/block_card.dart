@@ -70,7 +70,10 @@ class BlockCard extends StatelessWidget {
                   ),
                   if (done)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: scheme.primary.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(6),
@@ -88,13 +91,13 @@ class BlockCard extends StatelessWidget {
                   else if (empty)
                     Text(
                       'empty',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: scheme.textMid,
-                      ),
+                      style: TextStyle(fontSize: 11, color: scheme.textMid),
                     )
                   else
-                    Icon(Icons.chevron_right, color: scheme.onSurface.withValues(alpha: 0.5)),
+                    Icon(
+                      Icons.chevron_right,
+                      color: scheme.onSurface.withValues(alpha: 0.5),
+                    ),
                 ],
               ),
             ],

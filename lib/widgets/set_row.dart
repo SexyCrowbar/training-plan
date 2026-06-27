@@ -8,9 +8,14 @@ class SetRowData {
   final String weightText;
   final String repsText;
 
-  const SetRowData({required this.done, required this.weightText, required this.repsText});
+  const SetRowData({
+    required this.done,
+    required this.weightText,
+    required this.repsText,
+  });
 
-  SetRowData copyWith({bool? done, String? weightText, String? repsText}) => SetRowData(
+  SetRowData copyWith({bool? done, String? weightText, String? repsText}) =>
+      SetRowData(
         done: done ?? this.done,
         weightText: weightText ?? this.weightText,
         repsText: repsText ?? this.repsText,
@@ -25,7 +30,8 @@ class SetRow extends StatefulWidget {
   final SetRowData data;
   final String? suggestedTarget;
   final double? suggestedWeight;
-  final void Function(SetRowData next, {required bool triggeredByCheckbox}) onChanged;
+  final void Function(SetRowData next, {required bool triggeredByCheckbox})
+  onChanged;
 
   const SetRow({
     super.key,
@@ -121,7 +127,9 @@ class _SetRowState extends State<SetRow> {
             flex: 3,
             child: TextField(
               controller: _weightCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               textInputAction: TextInputAction.next,
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
@@ -131,7 +139,8 @@ class _SetRowState extends State<SetRow> {
                 widget.data.copyWith(weightText: v),
                 triggeredByCheckbox: false,
               ),
-              onSubmitted: (_) => FocusScope.of(context).requestFocus(_repsFocusNode),
+              onSubmitted: (_) =>
+                  FocusScope.of(context).requestFocus(_repsFocusNode),
             ),
           ),
           const SizedBox(width: 8),
@@ -143,7 +152,9 @@ class _SetRowState extends State<SetRow> {
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.done,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: InputDecoration(hintText: widget.suggestedTarget ?? 'reps'),
+              decoration: InputDecoration(
+                hintText: widget.suggestedTarget ?? 'reps',
+              ),
               onChanged: (v) => widget.onChanged(
                 widget.data.copyWith(repsText: v),
                 triggeredByCheckbox: false,

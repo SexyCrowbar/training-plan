@@ -13,7 +13,8 @@ class ExerciseRowEditor extends StatefulWidget {
     String? target,
     int? restSeconds,
     String? note,
-  }) onCommit;
+  })
+  onCommit;
   final VoidCallback onDelete;
   final Widget? dragHandle;
 
@@ -42,7 +43,9 @@ class _ExerciseRowEditorState extends State<ExerciseRowEditor> {
     _nameCtrl = TextEditingController(text: widget.exercise.name);
     _setsCtrl = TextEditingController(text: widget.exercise.sets.toString());
     _targetCtrl = TextEditingController(text: widget.exercise.target);
-    _restCtrl = TextEditingController(text: widget.exercise.restSeconds.toString());
+    _restCtrl = TextEditingController(
+      text: widget.exercise.restSeconds.toString(),
+    );
     _noteCtrl = TextEditingController(text: widget.exercise.note);
   }
 
@@ -50,7 +53,11 @@ class _ExerciseRowEditorState extends State<ExerciseRowEditor> {
   void didUpdateWidget(covariant ExerciseRowEditor old) {
     super.didUpdateWidget(old);
     _syncIfChanged(_nameCtrl, widget.exercise.name, old.exercise.name);
-    _syncIfChanged(_setsCtrl, widget.exercise.sets.toString(), old.exercise.sets.toString());
+    _syncIfChanged(
+      _setsCtrl,
+      widget.exercise.sets.toString(),
+      old.exercise.sets.toString(),
+    );
     _syncIfChanged(_targetCtrl, widget.exercise.target, old.exercise.target);
     _syncIfChanged(
       _restCtrl,

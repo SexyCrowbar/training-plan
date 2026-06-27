@@ -19,7 +19,8 @@ class BlockExerciseList extends StatelessWidget {
     String? target,
     int? restSeconds,
     String? note,
-  }) onUpdate;
+  })
+  onUpdate;
   final Future<void> Function(List<int> orderedRowIds) onReorder;
 
   const BlockExerciseList({

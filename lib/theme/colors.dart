@@ -136,12 +136,20 @@ ThemeData buildTheme(DayTheme theme) {
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
     ),
     textTheme: const TextTheme(
-      headlineLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+      headlineLarge: TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w900,
+        letterSpacing: -0.5,
+      ),
       titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
       titleMedium: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
       bodyLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
       bodyMedium: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-      labelMedium: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.8),
+      labelMedium: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.8,
+      ),
     ),
   );
 }

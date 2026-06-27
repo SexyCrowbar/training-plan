@@ -16,7 +16,7 @@ class DayTabs extends ConsumerWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: 7,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final dayId = i + 1;
           final selected = dayId == current;
@@ -30,7 +30,9 @@ class DayTabs extends ConsumerWidget {
                 color: selected ? scheme.primary : scheme.surface,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: selected ? scheme.primary : scheme.onSurface.withValues(alpha: 0.1),
+                  color: selected
+                      ? scheme.primary
+                      : scheme.onSurface.withValues(alpha: 0.1),
                 ),
               ),
               child: Text(

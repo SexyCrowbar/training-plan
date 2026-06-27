@@ -1,4 +1,4 @@
-/// Date helpers ported from `src/hooks/useDailyState.js:6-20`.
+// Date helpers ported from `src/hooks/useDailyState.js:6-20`.
 
 String _pad(int n) => n.toString().padLeft(2, '0');
 
@@ -20,7 +20,11 @@ String effectiveWeekStart(String? stored) {
 /// Parse "YYYY-MM-DD" to a DateTime at local midnight (00:00).
 DateTime parseDateKey(String key) {
   final parts = key.split('-');
-  return DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+  return DateTime(
+    int.parse(parts[0]),
+    int.parse(parts[1]),
+    int.parse(parts[2]),
+  );
 }
 
 /// Day of the 7-day training cycle (1..7) for [day], anchored to [weekStart].

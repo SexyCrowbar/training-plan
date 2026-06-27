@@ -36,10 +36,12 @@ class TrainScreen extends ConsumerWidget {
     }
 
     final template = ref.watch(activeTemplateProvider).valueOrNull;
-    final templates = ref.watch(allTemplatesProvider).valueOrNull ?? const <Template>[];
+    final templates =
+        ref.watch(allTemplatesProvider).valueOrNull ?? const <Template>[];
     final activeId = ref.watch(activeTemplateIdProvider).valueOrNull;
     final meta = ref.watch(currentDayMetaProvider);
-    final done = ref.watch(doneBlocksProvider).valueOrNull?[meta.id] ?? const <String>{};
+    final done =
+        ref.watch(doneBlocksProvider).valueOrNull?[meta.id] ?? const <String>{};
     // Blocks that have at least one exercise. Doubles as the recovery-day
     // detector: when this is empty on a non-rest day (e.g. Day 6), the screen
     // shows an active-recovery note instead of block cards.
@@ -135,10 +137,11 @@ class TrainScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverList.separated(
                   itemCount: populatedBlocks.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, i) {
                     final blockId = populatedBlocks[i];
-                    final exercises = template?.exercisesFor(meta.id, blockId) ?? const [];
+                    final exercises =
+                        template?.exercisesFor(meta.id, blockId) ?? const [];
                     return BlockCard(
                       blockId: blockId,
                       exercises: exercises,
@@ -155,7 +158,8 @@ class TrainScreen extends ConsumerWidget {
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.refresh),
                   label: const Text('Restart cycle (Day 1 today)'),
-                  onPressed: () => _startNewWeek(context, ref, templates, activeId),
+                  onPressed: () =>
+                      _startNewWeek(context, ref, templates, activeId),
                 ),
               ),
             ),
@@ -255,7 +259,10 @@ class _NewWeekResult {
 class _NewWeekDialog extends StatefulWidget {
   final List<Template> templates;
   final int? initialTemplateId;
-  const _NewWeekDialog({required this.templates, required this.initialTemplateId});
+  const _NewWeekDialog({
+    required this.templates,
+    required this.initialTemplateId,
+  });
 
   @override
   State<_NewWeekDialog> createState() => _NewWeekDialogState();
@@ -304,9 +311,9 @@ class _NewWeekDialogState extends State<_NewWeekDialog> {
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(
-            _NewWeekResult(templateId: _templateId),
-          ),
+          onPressed: () => Navigator.of(
+            context,
+          ).pop(_NewWeekResult(templateId: _templateId)),
           child: const Text('Start fresh'),
         ),
       ],

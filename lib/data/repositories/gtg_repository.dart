@@ -17,16 +17,19 @@ class GtgRepository {
 
   Future<int> countFor(int dayId, [String? dateStr]) async {
     final key = dateStr ?? todayKey();
-    final row = await (db.select(db.gtgLogs)
-          ..where((g) => g.date.equals(key) & g.dayId.equals(dayId)))
-        .getSingleOrNull();
+    final row =
+        await (db.select(db.gtgLogs)
+              ..where((g) => g.date.equals(key) & g.dayId.equals(dayId)))
+            .getSingleOrNull();
     return row?.count ?? 0;
   }
 
   Future<void> setCount(int dayId, int count) async {
     final clamped = count < 0 ? 0 : count;
     final key = todayKey();
-    await db.into(db.gtgLogs).insertOnConflictUpdate(
+    await db
+        .into(db.gtgLogs)
+        .insertOnConflictUpdate(
           GtgLogsCompanion.insert(date: key, dayId: dayId, count: clamped),
         );
   }
@@ -43,7 +46,9 @@ class GtgRepository {
 
   /// Insert or update a GTG count by date + dayId — used for import.
   Future<void> upsertCount(String date, int dayId, int count) async {
-    await db.into(db.gtgLogs).insertOnConflictUpdate(
+    await db
+        .into(db.gtgLogs)
+        .insertOnConflictUpdate(
           GtgLogsCompanion.insert(date: date, dayId: dayId, count: count),
         );
   }

@@ -37,13 +37,13 @@ class StateSnapshot {
   }
 
   Map<String, dynamic> toJson() => {
-        'gtg': {
-          for (final entry in gtg.entries)
-            entry.key: {
-              for (final inner in entry.value.entries)
-                inner.key.toString(): inner.value,
-            },
+    'gtg': {
+      for (final entry in gtg.entries)
+        entry.key: {
+          for (final inner in entry.value.entries)
+            inner.key.toString(): inner.value,
         },
-        if (weekStartDate != null) 'weekStartDate': weekStartDate,
-      };
+    },
+    if (weekStartDate != null) 'weekStartDate': weekStartDate,
+  };
 }

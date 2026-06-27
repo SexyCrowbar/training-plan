@@ -46,7 +46,10 @@ void main() {
     });
 
     test('ignores time-of-day component', () {
-      expect(dayOfCycle(DateTime(2026, 6, 28, 23, 59), DateTime(2026, 6, 27, 0, 1)), 2);
+      expect(
+        dayOfCycle(DateTime(2026, 6, 28, 23, 59), DateTime(2026, 6, 27, 0, 1)),
+        2,
+      );
     });
   });
 }

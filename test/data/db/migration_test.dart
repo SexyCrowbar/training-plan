@@ -36,11 +36,20 @@ void main() {
 
     final names = rows.map((r) => r.read<String>('name')).toSet();
 
-    expect(names, contains('idx_exercise_sets_log_id'),
-        reason: 'Missing index on exercise_sets(log_id)');
-    expect(names, contains('idx_exercise_sets_exercise_name'),
-        reason: 'Missing index on exercise_sets(exercise_name)');
-    expect(names, contains('idx_workout_logs_date'),
-        reason: 'Missing index on workout_logs(date)');
+    expect(
+      names,
+      contains('idx_exercise_sets_log_id'),
+      reason: 'Missing index on exercise_sets(log_id)',
+    );
+    expect(
+      names,
+      contains('idx_exercise_sets_exercise_name'),
+      reason: 'Missing index on exercise_sets(exercise_name)',
+    );
+    expect(
+      names,
+      contains('idx_workout_logs_date'),
+      reason: 'Missing index on workout_logs(date)',
+    );
   });
 }

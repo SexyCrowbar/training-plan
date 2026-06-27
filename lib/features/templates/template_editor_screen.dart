@@ -13,7 +13,8 @@ class TemplateEditorScreen extends ConsumerStatefulWidget {
   const TemplateEditorScreen({super.key, required this.templateId});
 
   @override
-  ConsumerState<TemplateEditorScreen> createState() => _TemplateEditorScreenState();
+  ConsumerState<TemplateEditorScreen> createState() =>
+      _TemplateEditorScreenState();
 }
 
 class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
@@ -80,9 +81,12 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                 height: 44,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
                   itemCount: 7,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
                   itemBuilder: (context, i) {
                     final dayId = i + 1;
                     final selected = dayId == _selectedDay;
@@ -143,27 +147,29 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                       for (final blockId in kBlockIds) ...[
                         BlockExerciseList(
                           blockId: blockId,
-                          exercises:
-                              resolved.exercisesFor(_selectedDay, blockId),
+                          exercises: resolved.exercisesFor(
+                            _selectedDay,
+                            blockId,
+                          ),
                           onAdd: () =>
                               _addExercise(repo, _selectedDay, blockId),
                           onRemove: (rowId) => repo.removeExercise(rowId),
-                          onUpdate: (
-                            rowId, {
-                            name,
-                            sets,
-                            target,
-                            restSeconds,
-                            note,
-                          }) =>
-                              repo.updateExercise(
-                            rowId,
-                            name: name,
-                            sets: sets,
-                            target: target,
-                            restSeconds: restSeconds,
-                            note: note,
-                          ),
+                          onUpdate:
+                              (
+                                rowId, {
+                                name,
+                                sets,
+                                target,
+                                restSeconds,
+                                note,
+                              }) => repo.updateExercise(
+                                rowId,
+                                name: name,
+                                sets: sets,
+                                target: target,
+                                restSeconds: restSeconds,
+                                note: note,
+                              ),
                           onReorder: (ids) async {
                             final blockRefId = await repo.getBlockRefId(
                               widget.templateId,
@@ -192,8 +198,11 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
     int dayId,
     String blockId,
   ) async {
-    final blockRefId =
-        await repo.getBlockRefId(widget.templateId, dayId, blockId);
+    final blockRefId = await repo.getBlockRefId(
+      widget.templateId,
+      dayId,
+      blockId,
+    );
     await repo.addExercise(
       blockRefId,
       name: 'New exercise',
@@ -204,7 +213,9 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
   }
 }
 
-final _resolvedProvider =
-    StreamProvider.family<ResolvedTemplate?, int>((ref, templateId) {
+final _resolvedProvider = StreamProvider.family<ResolvedTemplate?, int>((
+  ref,
+  templateId,
+) {
   return ref.watch(templateRepositoryProvider).watchResolved(templateId);
 });

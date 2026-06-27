@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -39,7 +41,7 @@ class TemplatesScreen extends ConsumerWidget {
           : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: templates.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (context, i) {
                 final t = templates[i];
                 final active = t.id == activeId;
@@ -74,8 +76,12 @@ class TemplatesScreen extends ConsumerWidget {
                                           vertical: 2,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: scheme.primary.withValues(alpha: 0.18),
-                                          borderRadius: BorderRadius.circular(6),
+                                          color: scheme.primary.withValues(
+                                            alpha: 0.18,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
                                         ),
                                         child: Text(
                                           'ACTIVE',
@@ -90,12 +96,12 @@ class TemplatesScreen extends ConsumerWidget {
                                   ],
                                 ),
                                 Text(
-                                  'Updated ${DateFormat('d MMM yyyy').format(
-                                    DateTime.fromMillisecondsSinceEpoch(t.updatedAt),
-                                  )}',
+                                  'Updated ${DateFormat('d MMM yyyy').format(DateTime.fromMillisecondsSinceEpoch(t.updatedAt))}',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: scheme.onSurface.withValues(alpha: 0.55),
+                                    color: scheme.onSurface.withValues(
+                                      alpha: 0.55,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -154,7 +160,11 @@ class TemplatesScreen extends ConsumerWidget {
         await settings.setInt(SettingsKeys.activeTemplateId, t.id);
         break;
       case 'rename':
-        final name = await _promptName(context, initial: t.name, title: 'Rename template');
+        final name = await _promptName(
+          context,
+          initial: t.name,
+          title: 'Rename template',
+        );
         if (name != null && name.isNotEmpty) await repo.rename(t.id, name);
         break;
       case 'duplicate':
@@ -181,7 +191,7 @@ class TemplatesScreen extends ConsumerWidget {
     if (name == null || name.isEmpty) return;
     final repo = ref.read(templateRepositoryProvider);
     final newId = await repo.createEmpty(name);
-    if (context.mounted) context.push('/templates/$newId');
+    if (context.mounted) unawaited(context.push('/templates/$newId'));
   }
 
   Future<void> _exportTemplate(
@@ -225,7 +235,7 @@ class TemplatesScreen extends ConsumerWidget {
         message: 'A new template was added to your list.',
       );
       if (!context.mounted) return;
-      context.push('/templates/$newId');
+      unawaited(context.push('/templates/$newId'));
     } catch (e) {
       if (!context.mounted) return;
       await showInfoModal(

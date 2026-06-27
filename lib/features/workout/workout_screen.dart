@@ -74,12 +74,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
           children: [
             Text(blockIcon),
             const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                blockName,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+            Expanded(child: Text(blockName, overflow: TextOverflow.ellipsis)),
           ],
         ),
         leading: IconButton(
@@ -118,106 +113,118 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
   Widget _exerciseBlock(TemplateExercise ex) {
     final rows = _setsByExercise[ex.id] ?? const [];
     final scheme = Theme.of(context).colorScheme;
-    return Consumer(builder: (context, ref, _) {
-      final top = ref.watch(lastTopSetByIdProvider((ex.exerciseId, ex.name))).valueOrNull;
-      final topWeight = (top != null && top.reps != null && top.weightKg != null && top.weightKg! > 0)
-          ? top.weightKg
-          : null;
+    return Consumer(
+      builder: (context, ref, _) {
+        final top = ref
+            .watch(lastTopSetByIdProvider((ex.exerciseId, ex.name)))
+            .valueOrNull;
+        final topWeight =
+            (top != null &&
+                top.reps != null &&
+                top.weightKg != null &&
+                top.weightKg! > 0)
+            ? top.weightKg
+            : null;
 
-      return Card(
-        margin: const EdgeInsets.only(bottom: 12),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                ex.name,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${ex.sets} × ${ex.target}  •  Rest ${ex.restSeconds}s',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: scheme.textMid,
-                      ),
-                    ),
-                    if (top != null && top.reps != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          'Last: ${(top.weightKg == null || top.weightKg == 0) ? 'BW' : '${_formatKg(top.weightKg!)} kg'} × ${top.reps}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: scheme.primary.withValues(alpha: 0.85),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              if (ex.note.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    ex.note,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: scheme.textMid,
-                      fontStyle: FontStyle.italic,
-                    ),
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ex.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const SizedBox(width: 24),
-                  Expanded(flex: 3, child: _headerLabel('Weight (kg)')),
-                  const SizedBox(width: 8),
-                  Expanded(flex: 3, child: _headerLabel('Reps')),
-                  const SizedBox(width: 8),
-                  const SizedBox(width: 48, child: SizedBox()),
-                ],
-              ),
-              for (var i = 0; i < rows.length; i++)
-                SetRow(
-                  key: ValueKey('${ex.id}_$i'),
-                  setNumber: i + 1,
-                  data: rows[i],
-                  suggestedTarget: ex.target,
-                  suggestedWeight: topWeight,
-                  onChanged: (next, {required triggeredByCheckbox}) {
-                    setState(() {
-                      rows[i] = next;
-                      _setsByExercise[ex.id] = rows;
-                    });
-                    if (triggeredByCheckbox && next.done && ex.restSeconds > 0) {
-                      ref.read(restTimerProvider.notifier).start(ex.restSeconds);
-                    }
-                  },
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${ex.sets} × ${ex.target}  •  Rest ${ex.restSeconds}s',
+                        style: TextStyle(fontSize: 12, color: scheme.textMid),
+                      ),
+                      if (top != null && top.reps != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            'Last: ${(top.weightKg == null || top.weightKg == 0) ? 'BW' : '${_formatKg(top.weightKg!)} kg'} × ${top.reps}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: scheme.primary.withValues(alpha: 0.85),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-            ],
+                if (ex.note.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      ex.note,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: scheme.textMid,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const SizedBox(width: 24),
+                    Expanded(flex: 3, child: _headerLabel('Weight (kg)')),
+                    const SizedBox(width: 8),
+                    Expanded(flex: 3, child: _headerLabel('Reps')),
+                    const SizedBox(width: 8),
+                    const SizedBox(width: 48, child: SizedBox()),
+                  ],
+                ),
+                for (var i = 0; i < rows.length; i++)
+                  SetRow(
+                    key: ValueKey('${ex.id}_$i'),
+                    setNumber: i + 1,
+                    data: rows[i],
+                    suggestedTarget: ex.target,
+                    suggestedWeight: topWeight,
+                    onChanged: (next, {required triggeredByCheckbox}) {
+                      setState(() {
+                        rows[i] = next;
+                        _setsByExercise[ex.id] = rows;
+                      });
+                      if (triggeredByCheckbox &&
+                          next.done &&
+                          ex.restSeconds > 0) {
+                        ref
+                            .read(restTimerProvider.notifier)
+                            .start(ex.restSeconds);
+                      }
+                    },
+                  ),
+              ],
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   Widget _headerLabel(String text) => Text(
-        text,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.6,
-          color: Theme.of(context).colorScheme.textMid,
-        ),
-      );
+    text,
+    style: TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.6,
+      color: Theme.of(context).colorScheme.textMid,
+    ),
+  );
 
   Future<void> _confirmBack(BuildContext context) async {
     final hasProgress = _setsByExercise.values
@@ -242,8 +249,9 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
     List<TemplateExercise> exercises,
   ) async {
     final meta = ref.read(currentDayMetaProvider);
-    final templateId =
-        await ref.read(settingsRepositoryProvider).getInt(SettingsKeys.activeTemplateId);
+    final templateId = await ref
+        .read(settingsRepositoryProvider)
+        .getInt(SettingsKeys.activeTemplateId);
 
     final sets = <SetInput>[];
     double? bestPrWeight;
@@ -297,7 +305,9 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
       // Uses the stable exerciseId so renames don't reset the PR baseline.
       PrResult? pr;
       if (bestPrExercise != null && bestPrE1rm > 0) {
-        final prior = await ref.read(workoutRepositoryProvider).getSetsForExercise(
+        final prior = await ref
+            .read(workoutRepositoryProvider)
+            .getSetsForExercise(
               exerciseId: bestPrExerciseId,
               exerciseName: bestPrExercise,
             );
@@ -316,7 +326,9 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
         }
       }
 
-      await ref.read(workoutRepositoryProvider).saveWorkout(
+      await ref
+          .read(workoutRepositoryProvider)
+          .saveWorkout(
             date: DateTime.now(),
             templateId: templateId,
             dayId: widget.dayId,
@@ -341,7 +353,9 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
       final savedCount = sets.where((s) => s.completed).length;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Block saved — $savedCount set${savedCount == 1 ? '' : 's'} logged'),
+          content: Text(
+            'Block saved — $savedCount set${savedCount == 1 ? '' : 's'} logged',
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -351,7 +365,8 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
       await showInfoModal(
         context: context,
         title: "Couldn't save",
-        message: 'Something went wrong saving this block. Your sets are still here — try again.',
+        message:
+            'Something went wrong saving this block. Your sets are still here — try again.',
       );
       return;
     }

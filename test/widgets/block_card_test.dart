@@ -6,7 +6,9 @@ import 'package:protocol/theme/colors.dart';
 import 'package:protocol/widgets/block_card.dart';
 
 void main() {
-  testWidgets('BlockCard empty label uses AppColors.onSurfaceMid', (tester) async {
+  testWidgets('BlockCard empty label uses AppColors.onSurfaceMid', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildTheme(DayTheme.iron),

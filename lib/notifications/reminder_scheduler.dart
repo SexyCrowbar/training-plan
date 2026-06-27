@@ -95,7 +95,9 @@ Future<void> _alarmCallback() async {
 
     final now = DateTime.now();
     final withinWindow = now.hour >= startHour && now.hour < endHour;
-    final weekStart = effectiveWeekStart(await settings.get(SettingsKeys.weekStartDate));
+    final weekStart = effectiveWeekStart(
+      await settings.get(SettingsKeys.weekStartDate),
+    );
     final dayId = ReminderScheduler.rotationDayId(now, weekStart);
     final isRestDay = (TrainingPlan.days[dayId]?.gtgTarget ?? 0) == 0;
 

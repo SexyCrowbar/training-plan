@@ -57,8 +57,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Row(
                   children: [
-                    Icon(Icons.event, size: 16,
-                        color: scheme.onSurface.withValues(alpha: 0.6)),
+                    Icon(
+                      Icons.event,
+                      size: 16,
+                      color: scheme.onSurface.withValues(alpha: 0.6),
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       filterLabel,
@@ -95,7 +98,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: logs.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, i) => _HistoryCard(log: logs[i]),
                       ),
               ),
@@ -124,8 +127,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final initial = _filterDay != null && loggedDays.contains(_filterDay)
         ? _filterDay!
         : (loggedDays.isNotEmpty
-            ? loggedDays.reduce((a, b) => a.isAfter(b) ? a : b)
-            : now);
+              ? loggedDays.reduce((a, b) => a.isAfter(b) ? a : b)
+              : now);
     if (!context.mounted) return;
     final scheme = Theme.of(context).colorScheme;
     final picked = await showDatePicker(
@@ -151,7 +154,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 return scheme.primary;
               }),
               dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) return scheme.primary;
+                if (states.contains(WidgetState.selected))
+                  return scheme.primary;
                 if (states.contains(WidgetState.disabled)) return null;
                 return scheme.primary.withValues(alpha: 0.08);
               }),
@@ -162,7 +166,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       },
     );
     if (picked != null) {
-      setState(() => _filterDay = DateTime(picked.year, picked.month, picked.day));
+      setState(
+        () => _filterDay = DateTime(picked.year, picked.month, picked.day),
+      );
     }
   }
 }
@@ -196,10 +202,13 @@ class _HistoryCard extends ConsumerWidget {
                     children: [
                       Text(
                         log.blockName,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                       Text(
-                        '${dateStr}  •  Day ${log.dayId}',
+                        '$dateStr  •  Day ${log.dayId}',
                         style: TextStyle(
                           fontSize: 11,
                           color: scheme.onSurface.withValues(alpha: 0.6),
@@ -219,7 +228,9 @@ class _HistoryCard extends ConsumerWidget {
                       danger: true,
                     );
                     if (ok) {
-                      await ref.read(workoutRepositoryProvider).deleteLog(log.id);
+                      await ref
+                          .read(workoutRepositoryProvider)
+                          .deleteLog(log.id);
                     }
                   },
                 ),
@@ -242,7 +253,10 @@ class _HistoryCard extends ConsumerWidget {
                       const SizedBox(height: 4),
                       Text(
                         entry.key,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       for (final s in entry.value)
                         Padding(

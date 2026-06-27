@@ -12,7 +12,8 @@ class ProtocolApp extends ConsumerStatefulWidget {
   ConsumerState<ProtocolApp> createState() => _ProtocolAppState();
 }
 
-class _ProtocolAppState extends ConsumerState<ProtocolApp> with WidgetsBindingObserver {
+class _ProtocolAppState extends ConsumerState<ProtocolApp>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();

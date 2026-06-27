@@ -18,7 +18,9 @@ void main() {
   });
 
   Future<void> insertGtgLog(String dateKey, int dayId, int count) async {
-    await db.into(db.gtgLogs).insert(
+    await db
+        .into(db.gtgLogs)
+        .insert(
           GtgLogsCompanion.insert(date: dateKey, dayId: dayId, count: count),
         );
   }

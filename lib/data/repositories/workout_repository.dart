@@ -38,7 +38,9 @@ class WorkoutRepository {
     required List<SetInput> sets,
   }) async {
     return db.transaction(() async {
-      final logId = await db.into(db.workoutLogs).insert(
+      final logId = await db
+          .into(db.workoutLogs)
+          .insert(
             WorkoutLogsCompanion.insert(
               date: date.millisecondsSinceEpoch,
               templateId: Value(templateId),
@@ -50,7 +52,9 @@ class WorkoutRepository {
             ),
           );
       for (final s in sets) {
-        await db.into(db.exerciseSets).insert(
+        await db
+            .into(db.exerciseSets)
+            .insert(
               ExerciseSetsCompanion.insert(
                 logId: logId,
                 exerciseId: Value(s.exerciseId),
@@ -71,11 +75,15 @@ class WorkoutRepository {
   }
 
   Stream<List<WorkoutLog>> watchAllLogs() {
-    return (db.select(db.workoutLogs)..orderBy([(l) => OrderingTerm.desc(l.date)])).watch();
+    return (db.select(
+      db.workoutLogs,
+    )..orderBy([(l) => OrderingTerm.desc(l.date)])).watch();
   }
 
   Future<List<WorkoutLog>> getAllLogs() {
-    return (db.select(db.workoutLogs)..orderBy([(l) => OrderingTerm.desc(l.date)])).get();
+    return (db.select(
+      db.workoutLogs,
+    )..orderBy([(l) => OrderingTerm.desc(l.date)])).get();
   }
 
   Future<List<ExerciseSet>> getSetsForLog(int logId) {
@@ -97,11 +105,15 @@ class WorkoutRepository {
     String? exerciseId,
     required String exerciseName,
   }) async {
-    final query = db.select(db.exerciseSets).join([
-      innerJoin(db.workoutLogs, db.workoutLogs.id.equalsExp(db.exerciseSets.logId)),
-    ])
-      ..where(db.exerciseSets.completed.equals(true))
-      ..orderBy([OrderingTerm.asc(db.workoutLogs.date)]);
+    final query =
+        db.select(db.exerciseSets).join([
+            innerJoin(
+              db.workoutLogs,
+              db.workoutLogs.id.equalsExp(db.exerciseSets.logId),
+            ),
+          ])
+          ..where(db.exerciseSets.completed.equals(true))
+          ..orderBy([OrderingTerm.asc(db.workoutLogs.date)]);
 
     if (exerciseId != null && exerciseId.isNotEmpty) {
       // Match by stable id, OR by name only when the stored id is empty
@@ -139,14 +151,20 @@ class WorkoutRepository {
     String exerciseName, {
     String? exerciseId,
   }) async {
-    final resolvedId = (exerciseId != null && exerciseId.isNotEmpty) ? exerciseId : null;
+    final resolvedId = (exerciseId != null && exerciseId.isNotEmpty)
+        ? exerciseId
+        : null;
 
-    final joinQuery = db.select(db.exerciseSets).join([
-      innerJoin(db.workoutLogs, db.workoutLogs.id.equalsExp(db.exerciseSets.logId)),
-    ])
-      ..where(db.exerciseSets.completed.equals(true))
-      ..orderBy([OrderingTerm.desc(db.workoutLogs.date)])
-      ..limit(1);
+    final joinQuery =
+        db.select(db.exerciseSets).join([
+            innerJoin(
+              db.workoutLogs,
+              db.workoutLogs.id.equalsExp(db.exerciseSets.logId),
+            ),
+          ])
+          ..where(db.exerciseSets.completed.equals(true))
+          ..orderBy([OrderingTerm.desc(db.workoutLogs.date)])
+          ..limit(1);
 
     if (resolvedId != null) {
       // Match by stable id, OR by name only for legacy/imported rows (id='').
@@ -194,9 +212,9 @@ class WorkoutRepository {
   /// weekStartDate in "YYYY-MM-DD" format (local time).
   Stream<Map<int, Set<String>>> watchDoneBlocks(String weekStartDate) {
     final cutoff = parseDateKey(weekStartDate).millisecondsSinceEpoch;
-    return (db.select(db.workoutLogs)..where((l) => l.date.isBiggerOrEqualValue(cutoff)))
-        .watch()
-        .map((rows) {
+    return (db.select(
+      db.workoutLogs,
+    )..where((l) => l.date.isBiggerOrEqualValue(cutoff))).watch().map((rows) {
       final out = <int, Set<String>>{1: {}, 2: {}, 3: {}, 4: {}, 5: {}};
       for (final r in rows) {
         out[r.dayId]?.add(r.blockId);
@@ -210,7 +228,9 @@ class WorkoutRepository {
     final q = db.selectOnly(db.exerciseSets, distinct: true)
       ..addColumns([db.exerciseSets.exerciseName])
       ..orderBy([OrderingTerm.asc(db.exerciseSets.exerciseName)]);
-    return q.watch().map((rows) => rows.map((r) => r.read(db.exerciseSets.exerciseName)!).toList());
+    return q.watch().map(
+      (rows) => rows.map((r) => r.read(db.exerciseSets.exerciseName)!).toList(),
+    );
   }
 }
 

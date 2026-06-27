@@ -17,7 +17,8 @@ class SettingsScreen extends ConsumerWidget {
     final enabled = ref.watch(_remindersEnabledProvider).valueOrNull ?? false;
     final startHour = ref.watch(_startHourProvider).valueOrNull ?? 9;
     final endHour = ref.watch(_endHourProvider).valueOrNull ?? 18;
-    final restAlertEnabled = ref.watch(_restAlertEnabledProvider).valueOrNull ?? true;
+    final restAlertEnabled =
+        ref.watch(_restAlertEnabledProvider).valueOrNull ?? true;
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -28,7 +29,9 @@ class SettingsScreen extends ConsumerWidget {
           Card(
             child: SwitchListTile(
               title: const Text('GTG hourly reminders'),
-              subtitle: const Text('Hourly notification to do a quick set within your active window.'),
+              subtitle: const Text(
+                'Hourly notification to do a quick set within your active window.',
+              ),
               value: enabled,
               onChanged: (v) async {
                 if (v) {
@@ -258,7 +261,9 @@ class SettingsScreen extends ConsumerWidget {
 }
 
 final _remindersEnabledProvider = StreamProvider<bool>((ref) {
-  return ref.watch(settingsRepositoryProvider).watchBool(SettingsKeys.remindersEnabled);
+  return ref
+      .watch(settingsRepositoryProvider)
+      .watchBool(SettingsKeys.remindersEnabled);
 });
 final _restAlertEnabledProvider = StreamProvider<bool>((ref) {
   return ref
@@ -266,13 +271,17 @@ final _restAlertEnabledProvider = StreamProvider<bool>((ref) {
       .watchBool(SettingsKeys.restTimerAlertEnabled, defaultValue: true);
 });
 final _startHourProvider = StreamProvider<int>((ref) async* {
-  final stream = ref.watch(settingsRepositoryProvider).watchInt(SettingsKeys.startHour);
+  final stream = ref
+      .watch(settingsRepositoryProvider)
+      .watchInt(SettingsKeys.startHour);
   await for (final v in stream) {
     yield v ?? 9;
   }
 });
 final _endHourProvider = StreamProvider<int>((ref) async* {
-  final stream = ref.watch(settingsRepositoryProvider).watchInt(SettingsKeys.endHour);
+  final stream = ref
+      .watch(settingsRepositoryProvider)
+      .watchInt(SettingsKeys.endHour);
   await for (final v in stream) {
     yield v ?? 18;
   }
@@ -282,7 +291,11 @@ class _HourPicker extends StatelessWidget {
   final String label;
   final int hour;
   final ValueChanged<int> onChanged;
-  const _HourPicker({required this.label, required this.hour, required this.onChanged});
+  const _HourPicker({
+    required this.label,
+    required this.hour,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -312,7 +325,9 @@ class _HourPicker extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 11,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 2),
@@ -336,7 +351,9 @@ class _PreviewRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final hours = <int>[];
     if (endHour > startHour) {
-      for (var h = startHour; h < endHour; h++) hours.add(h);
+      for (var h = startHour; h < endHour; h++) {
+        hours.add(h);
+      }
     }
     final scheme = Theme.of(context).colorScheme;
     return Wrap(
@@ -362,10 +379,7 @@ class _PreviewRow extends StatelessWidget {
         if (hours.isEmpty)
           Text(
             'End must be after start.',
-            style: TextStyle(
-              fontSize: 12,
-              color: scheme.error,
-            ),
+            style: TextStyle(fontSize: 12, color: scheme.error),
           ),
       ],
     );

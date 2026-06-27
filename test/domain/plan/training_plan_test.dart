@@ -11,7 +11,9 @@ void main() {
     });
 
     test('gtg targets follow the plan', () {
-      final targets = [for (var i = 1; i <= 7; i++) TrainingPlan.days[i]!.gtgTarget];
+      final targets = [
+        for (var i = 1; i <= 7; i++) TrainingPlan.days[i]!.gtgTarget,
+      ];
       expect(targets, [5, 5, 5, 4, 5, 3, 0]);
     });
 
@@ -31,7 +33,9 @@ void main() {
 
     test('training days carry power exercises', () {
       for (final id in [1, 2, 3, 5]) {
-        final power = TrainingPlan.days[id]!.blocks.firstWhere((b) => b.id == 'power');
+        final power = TrainingPlan.days[id]!.blocks.firstWhere(
+          (b) => b.id == 'power',
+        );
         expect(power.exercises, isNotEmpty, reason: 'day $id power');
       }
     });

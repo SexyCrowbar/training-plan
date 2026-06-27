@@ -19,17 +19,24 @@ class RestTimerState {
     required this.running,
   });
 
-  double get progress => totalSeconds == 0 ? 0 : remainingSeconds / totalSeconds;
+  double get progress =>
+      totalSeconds == 0 ? 0 : remainingSeconds / totalSeconds;
   bool get isActive => running && remainingSeconds > 0;
 
-  const RestTimerState.idle() : remainingSeconds = 0, totalSeconds = 0, running = false;
+  const RestTimerState.idle()
+    : remainingSeconds = 0,
+      totalSeconds = 0,
+      running = false;
 
-  RestTimerState copyWith({int? remainingSeconds, int? totalSeconds, bool? running}) =>
-      RestTimerState(
-        remainingSeconds: remainingSeconds ?? this.remainingSeconds,
-        totalSeconds: totalSeconds ?? this.totalSeconds,
-        running: running ?? this.running,
-      );
+  RestTimerState copyWith({
+    int? remainingSeconds,
+    int? totalSeconds,
+    bool? running,
+  }) => RestTimerState(
+    remainingSeconds: remainingSeconds ?? this.remainingSeconds,
+    totalSeconds: totalSeconds ?? this.totalSeconds,
+    running: running ?? this.running,
+  );
 }
 
 class RestTimerController extends StateNotifier<RestTimerState> {
@@ -81,13 +88,15 @@ class RestTimerController extends StateNotifier<RestTimerState> {
 
 final restTimerProvider =
     StateNotifierProvider<RestTimerController, RestTimerState>((ref) {
-  return RestTimerController(onExpired: () async {
-    final lifecycle = ref.read(appLifecycleProvider);
-    if (lifecycle == AppLifecycleState.resumed) return;
-    final enabled = await ref
-        .read(settingsRepositoryProvider)
-        .getBool(SettingsKeys.restTimerAlertEnabled, defaultValue: true);
-    if (!enabled) return;
-    await NotificationHelper.postRestTimerAlert();
-  });
-});
+      return RestTimerController(
+        onExpired: () async {
+          final lifecycle = ref.read(appLifecycleProvider);
+          if (lifecycle == AppLifecycleState.resumed) return;
+          final enabled = await ref
+              .read(settingsRepositoryProvider)
+              .getBool(SettingsKeys.restTimerAlertEnabled, defaultValue: true);
+          if (!enabled) return;
+          await NotificationHelper.postRestTimerAlert();
+        },
+      );
+    });

@@ -61,17 +61,22 @@ void main() {
       );
 
       final json = await ctrl.buildHistoryJson();
-      final entries =
-          List<Map<String, dynamic>>.from(jsonDecode(json) as List);
+      final entries = List<Map<String, dynamic>>.from(jsonDecode(json) as List);
       expect(entries, hasLength(1));
       final entry = entries.first;
 
       final expectedDayName = TrainingPlan.days[1]!.name;
-      expect(entry['dayName'], equals(expectedDayName),
-          reason:
-              'dayName should be the canonical plan day name, not the blockName');
-      expect(entry['dayName'], isNot(equals('Afternoon Hypertrophy')),
-          reason: 'dayName must NOT be the blockName');
+      expect(
+        entry['dayName'],
+        equals(expectedDayName),
+        reason:
+            'dayName should be the canonical plan day name, not the blockName',
+      );
+      expect(
+        entry['dayName'],
+        isNot(equals('Afternoon Hypertrophy')),
+        reason: 'dayName must NOT be the blockName',
+      );
     });
   });
 
@@ -158,9 +163,9 @@ void main() {
       expect(stats.sets, equals(4)); // 3 + 1
 
       // Verify logs in the new db (ordered ascending by date)
-      final logs = await (db2.select(db2.workoutLogs)
-            ..orderBy([(l) => OrderingTerm.asc(l.date)]))
-          .get();
+      final logs = await (db2.select(
+        db2.workoutLogs,
+      )..orderBy([(l) => OrderingTerm.asc(l.date)])).get();
       expect(logs, hasLength(2));
 
       // Log 1 fields
@@ -182,8 +187,9 @@ void main() {
       final benchSets = sets1
           .where((s) => s.exerciseName == 'Barbell Bench Press')
           .toList();
-      final pullSets =
-          sets1.where((s) => s.exerciseName == 'Pull-Ups').toList();
+      final pullSets = sets1
+          .where((s) => s.exerciseName == 'Pull-Ups')
+          .toList();
       expect(benchSets, hasLength(2));
       expect(pullSets, hasLength(1));
 
@@ -320,87 +326,107 @@ void main() {
   // ---------------------------------------------------------------------------
   group('state round-trip', () {
     test(
-        'buildStateJson → importState preserves GTG counts and weekStartDate',
-        () async {
-      // Seed GTG rows directly
-      await db.into(db.gtgLogs).insert(
-            GtgLogsCompanion.insert(date: '2026-01-15', dayId: 1, count: 3),
-          );
-      await db.into(db.gtgLogs).insert(
-            GtgLogsCompanion.insert(date: '2026-01-15', dayId: 2, count: 5),
-          );
-      await db.into(db.gtgLogs).insert(
-            GtgLogsCompanion.insert(date: '2026-01-20', dayId: 3, count: 2),
-          );
+      'buildStateJson → importState preserves GTG counts and weekStartDate',
+      () async {
+        // Seed GTG rows directly
+        await db
+            .into(db.gtgLogs)
+            .insert(
+              GtgLogsCompanion.insert(date: '2026-01-15', dayId: 1, count: 3),
+            );
+        await db
+            .into(db.gtgLogs)
+            .insert(
+              GtgLogsCompanion.insert(date: '2026-01-15', dayId: 2, count: 5),
+            );
+        await db
+            .into(db.gtgLogs)
+            .insert(
+              GtgLogsCompanion.insert(date: '2026-01-20', dayId: 3, count: 2),
+            );
 
-      // Seed weekStartDate setting
-      await db.into(db.appSettings).insertOnConflictUpdate(
-            AppSettingsCompanion.insert(
-                key: 'weekStartDate', value: '2026-01-13'),
-          );
+        // Seed weekStartDate setting
+        await db
+            .into(db.appSettings)
+            .insertOnConflictUpdate(
+              AppSettingsCompanion.insert(
+                key: 'weekStartDate',
+                value: '2026-01-13',
+              ),
+            );
 
-      final json = await ctrl.buildStateJson();
+        final json = await ctrl.buildStateJson();
 
-      // Import into a fresh second db
-      final db2 = AppDatabase.forTesting(NativeDatabase.memory());
-      addTearDown(db2.close);
-      final container2 = ProviderContainer(
-        overrides: [appDatabaseProvider.overrideWithValue(db2)],
-      );
-      addTearDown(container2.dispose);
-      final ctrl2 = container2.read(importExportControllerProvider);
+        // Import into a fresh second db
+        final db2 = AppDatabase.forTesting(NativeDatabase.memory());
+        addTearDown(db2.close);
+        final container2 = ProviderContainer(
+          overrides: [appDatabaseProvider.overrideWithValue(db2)],
+        );
+        addTearDown(container2.dispose);
+        final ctrl2 = container2.read(importExportControllerProvider);
 
-      final stats = await ctrl2.importState(json);
-      expect(stats.rows, equals(3));
-      expect(stats.weekStartApplied, isTrue);
+        final stats = await ctrl2.importState(json);
+        expect(stats.rows, equals(3));
+        expect(stats.weekStartApplied, isTrue);
 
-      // Verify GTG rows
-      final rows = await db2.select(db2.gtgLogs).get();
-      expect(rows, hasLength(3));
+        // Verify GTG rows
+        final rows = await db2.select(db2.gtgLogs).get();
+        expect(rows, hasLength(3));
 
-      final row1 =
-          rows.firstWhere((r) => r.date == '2026-01-15' && r.dayId == 1);
-      expect(row1.count, equals(3));
+        final row1 = rows.firstWhere(
+          (r) => r.date == '2026-01-15' && r.dayId == 1,
+        );
+        expect(row1.count, equals(3));
 
-      final row2 =
-          rows.firstWhere((r) => r.date == '2026-01-15' && r.dayId == 2);
-      expect(row2.count, equals(5));
+        final row2 = rows.firstWhere(
+          (r) => r.date == '2026-01-15' && r.dayId == 2,
+        );
+        expect(row2.count, equals(5));
 
-      final row3 =
-          rows.firstWhere((r) => r.date == '2026-01-20' && r.dayId == 3);
-      expect(row3.count, equals(2));
+        final row3 = rows.firstWhere(
+          (r) => r.date == '2026-01-20' && r.dayId == 3,
+        );
+        expect(row3.count, equals(2));
 
-      // Verify weekStartDate was persisted
-      final settings2 = container2.read(settingsRepositoryProvider);
-      final weekStart = await settings2.get(SettingsKeys.weekStartDate);
-      expect(weekStart, equals('2026-01-13'));
-    });
+        // Verify weekStartDate was persisted
+        final settings2 = container2.read(settingsRepositoryProvider);
+        final weekStart = await settings2.get(SettingsKeys.weekStartDate);
+        expect(weekStart, equals('2026-01-13'));
+      },
+    );
 
-    test('importState without weekStartDate leaves setting untouched',
-        () async {
-      final db2 = AppDatabase.forTesting(NativeDatabase.memory());
-      addTearDown(db2.close);
-      final container2 = ProviderContainer(
-        overrides: [appDatabaseProvider.overrideWithValue(db2)],
-      );
-      addTearDown(container2.dispose);
-      final ctrl2 = container2.read(importExportControllerProvider);
+    test(
+      'importState without weekStartDate leaves setting untouched',
+      () async {
+        final db2 = AppDatabase.forTesting(NativeDatabase.memory());
+        addTearDown(db2.close);
+        final container2 = ProviderContainer(
+          overrides: [appDatabaseProvider.overrideWithValue(db2)],
+        );
+        addTearDown(container2.dispose);
+        final ctrl2 = container2.read(importExportControllerProvider);
 
-      // Preset a weekStartDate in db2
-      await db2.into(db2.appSettings).insertOnConflictUpdate(
-            AppSettingsCompanion.insert(
-                key: 'weekStartDate', value: '2026-01-01'),
-          );
+        // Preset a weekStartDate in db2
+        await db2
+            .into(db2.appSettings)
+            .insertOnConflictUpdate(
+              AppSettingsCompanion.insert(
+                key: 'weekStartDate',
+                value: '2026-01-01',
+              ),
+            );
 
-      // Import state with no weekStartDate field
-      const jsonNoWeek = '{"gtg": {"2026-02-01": {"4": 7}}}';
-      final stats = await ctrl2.importState(jsonNoWeek);
-      expect(stats.weekStartApplied, isFalse);
+        // Import state with no weekStartDate field
+        const jsonNoWeek = '{"gtg": {"2026-02-01": {"4": 7}}}';
+        final stats = await ctrl2.importState(jsonNoWeek);
+        expect(stats.weekStartApplied, isFalse);
 
-      // Original value should be unchanged
-      final settings2 = container2.read(settingsRepositoryProvider);
-      final weekStart = await settings2.get(SettingsKeys.weekStartDate);
-      expect(weekStart, equals('2026-01-01'));
-    });
+        // Original value should be unchanged
+        final settings2 = container2.read(settingsRepositoryProvider);
+        final weekStart = await settings2.get(SettingsKeys.weekStartDate);
+        expect(weekStart, equals('2026-01-01'));
+      },
+    );
   });
 }

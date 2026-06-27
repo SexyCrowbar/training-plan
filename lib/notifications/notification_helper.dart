@@ -4,7 +4,8 @@ class NotificationHelper {
   // GTG channel (existing)
   static const _gtgChannelId = 'gtg_reminders';
   static const _gtgChannelName = 'GTG Reminders';
-  static const _gtgChannelDesc = 'Hourly reminders to do a Grease-the-Groove set.';
+  static const _gtgChannelDesc =
+      'Hourly reminders to do a Grease-the-Groove set.';
   static const _gtgNotificationId = 1001;
 
   // Rest timer channel (new)
@@ -21,26 +22,34 @@ class NotificationHelper {
     const init = InitializationSettings(android: androidInit);
     await _plugin.initialize(init);
     final androidImpl = _plugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    await androidImpl?.createNotificationChannel(const AndroidNotificationChannel(
-      _gtgChannelId,
-      _gtgChannelName,
-      description: _gtgChannelDesc,
-      importance: Importance.defaultImportance,
-    ));
-    await androidImpl?.createNotificationChannel(const AndroidNotificationChannel(
-      _restChannelId,
-      _restChannelName,
-      description: _restChannelDesc,
-      importance: Importance.high,
-      playSound: true,
-      enableVibration: true,
-    ));
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    await androidImpl?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        _gtgChannelId,
+        _gtgChannelName,
+        description: _gtgChannelDesc,
+        importance: Importance.defaultImportance,
+      ),
+    );
+    await androidImpl?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        _restChannelId,
+        _restChannelName,
+        description: _restChannelDesc,
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+      ),
+    );
   }
 
   static Future<bool> requestPermissions() async {
     final androidImpl = _plugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     final granted = await androidImpl?.requestNotificationsPermission() ?? true;
     return granted;
   }

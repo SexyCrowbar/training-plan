@@ -114,15 +114,17 @@ class _RoundButton extends StatelessWidget {
   final VoidCallback? onTap;
   final bool filled;
 
-  const _RoundButton({required this.icon, required this.onTap, this.filled = false});
+  const _RoundButton({
+    required this.icon,
+    required this.onTap,
+    this.filled = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final enabled = onTap != null;
-    final bg = filled
-        ? scheme.primary
-        : scheme.surfaceContainerHighest;
+    final bg = filled ? scheme.primary : scheme.surfaceContainerHighest;
     final fg = filled ? scheme.onPrimary : scheme.onSurface;
     return Material(
       color: enabled ? bg : bg.withValues(alpha: 0.4),

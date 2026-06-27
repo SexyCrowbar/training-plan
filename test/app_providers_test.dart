@@ -7,11 +7,13 @@ import 'package:protocol/domain/util/week.dart';
 void main() {
   group('derivedDayProvider', () {
     test('returns 1 when weekStart is today', () async {
-      final container = ProviderContainer(overrides: [
-        weekStartProvider.overrideWith((ref) async* {
-          yield todayKey();
-        }),
-      ]);
+      final container = ProviderContainer(
+        overrides: [
+          weekStartProvider.overrideWith((ref) async* {
+            yield todayKey();
+          }),
+        ],
+      );
       addTearDown(container.dispose);
 
       // Wait for the stream to emit.
@@ -25,11 +27,13 @@ void main() {
           DateTime(now.year, now.month, now.day).subtract(Duration(days: days));
 
       Future<int> dayFor(DateTime weekStart) async {
-        final c = ProviderContainer(overrides: [
-          weekStartProvider.overrideWith((ref) async* {
-            yield dateKey(weekStart);
-          }),
-        ]);
+        final c = ProviderContainer(
+          overrides: [
+            weekStartProvider.overrideWith((ref) async* {
+              yield dateKey(weekStart);
+            }),
+          ],
+        );
         addTearDown(c.dispose);
         await c.read(weekStartProvider.future);
         return c.read(derivedDayProvider);

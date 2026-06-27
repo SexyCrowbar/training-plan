@@ -19,29 +19,36 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) {
           return Scaffold(
             body: child,
-            bottomNavigationBar: BottomNav(currentLocation: state.matchedLocation),
+            bottomNavigationBar: BottomNav(
+              currentLocation: state.matchedLocation,
+            ),
           );
         },
         routes: [
           GoRoute(
             path: '/',
-            pageBuilder: (context, state) => const NoTransitionPage(child: TrainScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: TrainScreen()),
           ),
           GoRoute(
             path: '/stats',
-            pageBuilder: (context, state) => const NoTransitionPage(child: StatsScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: StatsScreen()),
           ),
           GoRoute(
             path: '/history',
-            pageBuilder: (context, state) => const NoTransitionPage(child: HistoryScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: HistoryScreen()),
           ),
           GoRoute(
             path: '/templates',
-            pageBuilder: (context, state) => const NoTransitionPage(child: TemplatesScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: TemplatesScreen()),
           ),
           GoRoute(
             path: '/settings',
-            pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SettingsScreen()),
           ),
         ],
       ),

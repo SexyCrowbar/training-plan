@@ -48,7 +48,8 @@ class RestTimerBar extends ConsumerWidget {
                   ),
                   const SizedBox(width: 12),
                   TextButton(
-                    onPressed: () => ref.read(restTimerProvider.notifier).skip(),
+                    onPressed: () =>
+                        ref.read(restTimerProvider.notifier).skip(),
                     child: const Text('Skip'),
                   ),
                 ],

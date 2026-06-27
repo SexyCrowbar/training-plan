@@ -9,7 +9,10 @@ void main() {
 
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, (call) async => null);
+        .setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async => null,
+        );
   });
 
   tearDown(() {
@@ -21,9 +24,11 @@ void main() {
     test('onExpired fires exactly once when the timer reaches zero', () {
       fakeAsync((async) {
         var calls = 0;
-        final ctrl = RestTimerController(onExpired: () async {
-          calls++;
-        });
+        final ctrl = RestTimerController(
+          onExpired: () async {
+            calls++;
+          },
+        );
 
         ctrl.start(3);
         // Advance past the full duration.
@@ -38,9 +43,11 @@ void main() {
     test('skip() does not trigger onExpired', () {
       fakeAsync((async) {
         var calls = 0;
-        final ctrl = RestTimerController(onExpired: () async {
-          calls++;
-        });
+        final ctrl = RestTimerController(
+          onExpired: () async {
+            calls++;
+          },
+        );
 
         ctrl.start(10);
         async.elapse(const Duration(seconds: 2));

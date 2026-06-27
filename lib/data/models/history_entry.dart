@@ -41,8 +41,7 @@ class HistoryEntry {
     required this.exercises,
   });
 
-  int get totalSets =>
-      exercises.fold<int>(0, (n, ex) => n + ex.sets.length);
+  int get totalSets => exercises.fold<int>(0, (n, ex) => n + ex.sets.length);
 
   factory HistoryEntry.fromJson(Map<String, dynamic> json) {
     return HistoryEntry(
@@ -61,16 +60,16 @@ class HistoryEntry {
   }
 
   Map<String, dynamic> toJson() => {
-        'date': date.toUtc().toIso8601String(),
-        'day': day,
-        'dayName': dayName,
-        'blockId': blockId,
-        'blockName': blockName,
-        'blockIcon': blockIcon,
-        'theme': theme,
-        'exercises': [for (final e in exercises) e.toJson()],
-        'totalSets': totalSets,
-      };
+    'date': date.toUtc().toIso8601String(),
+    'day': day,
+    'dayName': dayName,
+    'blockId': blockId,
+    'blockName': blockName,
+    'blockIcon': blockIcon,
+    'theme': theme,
+    'exercises': [for (final e in exercises) e.toJson()],
+    'totalSets': totalSets,
+  };
 }
 
 class HistoryExercise {
@@ -90,9 +89,9 @@ class HistoryExercise {
   }
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'sets': [for (final s in sets) s.toJson()],
-      };
+    'name': name,
+    'sets': [for (final s in sets) s.toJson()],
+  };
 }
 
 class HistorySet {
@@ -113,10 +112,10 @@ class HistorySet {
   }
 
   Map<String, dynamic> toJson() => {
-        'done': done,
-        'weight': weight,
-        'reps': reps,
-      };
+    'done': done,
+    'weight': weight,
+    'reps': reps,
+  };
 
   double? get weightKg {
     if (weight.isEmpty || weight == '—') return null;

@@ -38,7 +38,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             );
           }
           _activeLift ??= lifts.first;
-          final selected = lifts.contains(_activeLift) ? _activeLift! : lifts.first;
+          final selected = lifts.contains(_activeLift)
+              ? _activeLift!
+              : lifts.first;
           final scheme = Theme.of(context).colorScheme;
           return Column(
             children: [
@@ -48,8 +50,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   decoration: InputDecoration(
                     labelText: 'Exercise',
                     isDense: true,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -92,10 +96,12 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 /// Union of distinct exercise names from history + all templates. Replaces
 /// the hardcoded `LIFTS` list at `src/components/StatsScreen.jsx:3-9`.
 final _liftsProvider = StreamProvider<List<String>>((ref) async* {
-  final history =
-      ref.watch(workoutRepositoryProvider).watchDistinctExerciseNames();
-  final templates =
-      ref.watch(templateRepositoryProvider).watchDistinctExerciseNames();
+  final history = ref
+      .watch(workoutRepositoryProvider)
+      .watchDistinctExerciseNames();
+  final templates = ref
+      .watch(templateRepositoryProvider)
+      .watchDistinctExerciseNames();
 
   var lastHistory = <String>[];
   var lastTemplates = <String>[];
@@ -130,13 +136,17 @@ class _LiftDetail extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return FutureBuilder<List<ExerciseSetWithDate>>(
-      future: ref.read(workoutRepositoryProvider).getSetsForExerciseName(liftName),
+      future: ref
+          .read(workoutRepositoryProvider)
+          .getSetsForExerciseName(liftName),
       builder: (context, snap) {
         final data = snap.data;
-        if (data == null) return const Center(child: CircularProgressIndicator());
+        if (data == null)
+          return const Center(child: CircularProgressIndicator());
 
         // Build per-session best e1RM.
-        final grouped = <int, ({DateTime date, double weight, int reps, double e1rm})>{};
+        final grouped =
+            <int, ({DateTime date, double weight, int reps, double e1rm})>{};
         for (final row in data) {
           final e = estimatedOneRepMax(row.set.weightKg, row.set.reps);
           if (e == null) continue;
@@ -151,12 +161,15 @@ class _LiftDetail extends ConsumerWidget {
             );
           }
         }
-        final sessions = grouped.values.toList()..sort((a, b) => a.date.compareTo(b.date));
+        final sessions = grouped.values.toList()
+          ..sort((a, b) => a.date.compareTo(b.date));
         if (sessions.isEmpty) {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(32),
-              child: Text('No completed sets with weight + reps for this lift.'),
+              child: Text(
+                'No completed sets with weight + reps for this lift.',
+              ),
             ),
           );
         }
@@ -181,13 +194,18 @@ class _LiftDetail extends ConsumerWidget {
                             children: [
                               Text(
                                 liftName,
-                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                               Text(
                                 'Estimated 1-Rep Max',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: scheme.onSurface.withValues(alpha: 0.6),
+                                  color: scheme.onSurface.withValues(
+                                    alpha: 0.6,
+                                  ),
                                 ),
                               ),
                             ],
@@ -226,7 +244,9 @@ class _LiftDetail extends ConsumerWidget {
                                 'Need at least 2 sessions for a chart',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: scheme.onSurface.withValues(alpha: 0.6),
+                                  color: scheme.onSurface.withValues(
+                                    alpha: 0.6,
+                                  ),
                                 ),
                               ),
                             )

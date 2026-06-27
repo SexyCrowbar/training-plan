@@ -25,8 +25,8 @@ class TemplateBlocks extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [
-        {templateId, dayId, blockId},
-      ];
+    {templateId, dayId, blockId},
+  ];
 }
 
 class TemplateExercises extends Table {
@@ -46,8 +46,11 @@ class TemplateExercises extends Table {
 class WorkoutLogs extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get date => integer()(); // epoch millis
-  IntColumn get templateId =>
-      integer().nullable().references(Templates, #id, onDelete: KeyAction.setNull)();
+  IntColumn get templateId => integer().nullable().references(
+    Templates,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
   IntColumn get dayId => integer()();
   TextColumn get blockId => text()();
   TextColumn get blockName => text()();
@@ -100,34 +103,34 @@ class AppSettings extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
-  AppDatabase.forTesting(QueryExecutor e) : super(e);
+  AppDatabase.forTesting(super.e);
 
   @override
   int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async => m.createAll(),
-        onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            await customStatement(
-              'CREATE INDEX IF NOT EXISTS idx_exercise_sets_log_id '
-              'ON exercise_sets (log_id);',
-            );
-            await customStatement(
-              'CREATE INDEX IF NOT EXISTS idx_exercise_sets_exercise_name '
-              'ON exercise_sets (exercise_name);',
-            );
-            await customStatement(
-              'CREATE INDEX IF NOT EXISTS idx_workout_logs_date '
-              'ON workout_logs (date);',
-            );
-          }
-        },
-        beforeOpen: (details) async {
-          await customStatement('PRAGMA foreign_keys = ON;');
-        },
-      );
+    onCreate: (m) async => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_exercise_sets_log_id '
+          'ON exercise_sets (log_id);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_exercise_sets_exercise_name '
+          'ON exercise_sets (exercise_name);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_workout_logs_date '
+          'ON workout_logs (date);',
+        );
+      }
+    },
+    beforeOpen: (details) async {
+      await customStatement('PRAGMA foreign_keys = ON;');
+    },
+  );
 }
 
 LazyDatabase _openConnection() {

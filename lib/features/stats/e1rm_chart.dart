@@ -65,7 +65,7 @@ class E1rmChart extends StatelessWidget {
             barWidth: 2.5,
             dotData: FlDotData(
               show: true,
-              getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
+              getDotPainter: (spot, _, _, _) => FlDotCirclePainter(
                 radius: 3,
                 color: scheme.primary,
                 strokeWidth: 0,
