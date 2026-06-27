@@ -74,6 +74,10 @@ class WorkoutRepository {
     return (db.select(db.workoutLogs)..orderBy([(l) => OrderingTerm.desc(l.date)])).watch();
   }
 
+  Future<List<WorkoutLog>> getAllLogs() {
+    return (db.select(db.workoutLogs)..orderBy([(l) => OrderingTerm.desc(l.date)])).get();
+  }
+
   Future<List<ExerciseSet>> getSetsForLog(int logId) {
     return (db.select(db.exerciseSets)
           ..where((s) => s.logId.equals(logId))

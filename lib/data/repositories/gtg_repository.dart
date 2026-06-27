@@ -36,6 +36,18 @@ class GtgRepository {
     await setCount(dayId, current + delta);
   }
 
+  /// All GTG log rows — used for export.
+  Future<List<GtgLog>> getAllCounts() {
+    return db.select(db.gtgLogs).get();
+  }
+
+  /// Insert or update a GTG count by date + dayId — used for import.
+  Future<void> upsertCount(String date, int dayId, int count) async {
+    await db.into(db.gtgLogs).insertOnConflictUpdate(
+          GtgLogsCompanion.insert(date: date, dayId: dayId, count: count),
+        );
+  }
+
   /// Clears all GTG rows. Used by "Start new week".
   Future<void> clearAll() async {
     await db.delete(db.gtgLogs).go();

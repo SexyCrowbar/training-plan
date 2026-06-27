@@ -1,19 +1,17 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:drift/drift.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
-
 import '../../app_providers.dart';
-import '../../data/db/app_database.dart';
+import '../../data/db/app_database.dart' show ExerciseSet;
 import '../../data/models/history_entry.dart';
 import '../../data/models/state_snapshot.dart';
+import '../../data/repositories/gtg_repository.dart';
 import '../../data/repositories/settings_repository.dart';
+import '../../data/repositories/template_repository.dart';
 import '../../data/repositories/workout_repository.dart';
-import '../../domain/plan/models.dart';
 import '../../domain/plan/training_plan.dart';
 
 /// Coordinates JSON import/export of history + state between the app and the
@@ -23,17 +21,16 @@ class ImportExportController {
   final Ref ref;
   ImportExportController(this.ref);
 
-  AppDatabase get _db => ref.read(appDatabaseProvider);
   WorkoutRepository get _workouts => ref.read(workoutRepositoryProvider);
+  GtgRepository get _gtg => ref.read(gtgRepositoryProvider);
+  TemplateRepository get _templates => ref.read(templateRepositoryProvider);
   SettingsRepository get _settings => ref.read(settingsRepositoryProvider);
 
   // --- EXPORT ---
 
   /// Serialize all workout logs + sets to the `history.json` shape.
   Future<String> buildHistoryJson() async {
-    final logs = await (_db.select(_db.workoutLogs)
-          ..orderBy([(l) => OrderingTerm.desc(l.date)]))
-        .get();
+    final logs = await _workouts.getAllLogs();
     final entries = <HistoryEntry>[];
     for (final log in logs) {
       final sets = await _workouts.getSetsForLog(log.id);
@@ -73,7 +70,7 @@ class ImportExportController {
 
   /// Serialize GTG counts + week-start to the `state.json` shape.
   Future<String> buildStateJson() async {
-    final rows = await _db.select(_db.gtgLogs).get();
+    final rows = await _gtg.getAllCounts();
     final gtg = <String, Map<int, int>>{};
     for (final r in rows) {
       gtg.putIfAbsent(r.date, () => {})[r.dayId] = r.count;
@@ -136,39 +133,37 @@ class ImportExportController {
 
     int logs = 0;
     int sets = 0;
-    await _db.transaction(() async {
-      for (final entry in entries) {
-        final setInputs = <SetInput>[];
-        var setNumber = 0;
-        for (final ex in entry.exercises) {
-          for (final s in ex.sets) {
-            setNumber++;
-            setInputs.add(
-              SetInput(
-                exerciseId: '',
-                exerciseName: ex.name,
-                setNumber: setNumber,
-                weightKg: s.weightKg,
-                reps: s.repsInt,
-                completed: s.done,
-              ),
-            );
-          }
+    for (final entry in entries) {
+      final setInputs = <SetInput>[];
+      var setNumber = 0;
+      for (final ex in entry.exercises) {
+        for (final s in ex.sets) {
+          setNumber++;
+          setInputs.add(
+            SetInput(
+              exerciseId: '',
+              exerciseName: ex.name,
+              setNumber: setNumber,
+              weightKg: s.weightKg,
+              reps: s.repsInt,
+              completed: s.done,
+            ),
+          );
         }
-        await _workouts.saveWorkout(
-          date: entry.date,
-          templateId: null,
-          dayId: entry.day,
-          blockId: entry.blockId,
-          blockName: entry.blockName,
-          blockIcon: entry.blockIcon,
-          theme: entry.theme,
-          sets: setInputs,
-        );
-        logs++;
-        sets += setInputs.length;
       }
-    });
+      await _workouts.saveWorkout(
+        date: entry.date,
+        templateId: null,
+        dayId: entry.day,
+        blockId: entry.blockId,
+        blockName: entry.blockName,
+        blockIcon: entry.blockIcon,
+        theme: entry.theme,
+        sets: setInputs,
+      );
+      logs++;
+      sets += setInputs.length;
+    }
     return ImportStats(logs: logs, sets: sets);
   }
 
@@ -180,23 +175,15 @@ class ImportExportController {
     }
     final snap = StateSnapshot.fromJson(raw);
     int rows = 0;
-    await _db.transaction(() async {
-      for (final dateEntry in snap.gtg.entries) {
-        for (final dayEntry in dateEntry.value.entries) {
-          await _db.into(_db.gtgLogs).insertOnConflictUpdate(
-                GtgLogsCompanion.insert(
-                  date: dateEntry.key,
-                  dayId: dayEntry.key,
-                  count: dayEntry.value,
-                ),
-              );
-          rows++;
-        }
+    for (final dateEntry in snap.gtg.entries) {
+      for (final dayEntry in dateEntry.value.entries) {
+        await _gtg.upsertCount(dateEntry.key, dayEntry.key, dayEntry.value);
+        rows++;
       }
-      if (snap.weekStartDate != null) {
-        await _settings.set(SettingsKeys.weekStartDate, snap.weekStartDate!);
-      }
-    });
+    }
+    if (snap.weekStartDate != null) {
+      await _settings.set(SettingsKeys.weekStartDate, snap.weekStartDate!);
+    }
     return ImportStateStats(
       rows: rows,
       weekStartApplied: snap.weekStartDate != null,
@@ -208,21 +195,14 @@ class ImportExportController {
   /// Serialize a single template (blocks + exercises) to a self-contained JSON
   /// document. The format is independent of internal row ids.
   Future<String> buildTemplateJson(int templateId) async {
-    final template = await (_db.select(_db.templates)
-          ..where((t) => t.id.equals(templateId)))
-        .getSingleOrNull();
-    if (template == null) {
+    final data = await _templates.getTemplateForExport(templateId);
+    if (data == null) {
       throw StateError('Template $templateId not found.');
     }
-    final blocks = await (_db.select(_db.templateBlocks)
-          ..where((b) => b.templateId.equals(templateId)))
-        .get();
+    final (template, blocks, exercisesByBlock) = data;
     final blocksJson = <Map<String, dynamic>>[];
     for (final b in blocks) {
-      final exs = await (_db.select(_db.templateExercises)
-            ..where((e) => e.blockRefId.equals(b.id))
-            ..orderBy([(e) => OrderingTerm.asc(e.position)]))
-          .get();
+      final exs = exercisesByBlock[b.id] ?? [];
       blocksJson.add({
         'dayId': b.dayId,
         'blockId': b.blockId,
@@ -265,64 +245,18 @@ class ImportExportController {
     }
     final name = (raw['name'] as String?)?.trim();
     final templateName = (name == null || name.isEmpty) ? 'Imported template' : name;
-    const uuid = Uuid();
 
-    return await _db.transaction(() async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final newId = await _db.into(_db.templates).insert(
-            TemplatesCompanion.insert(
-              name: templateName,
-              createdAt: now,
-              updatedAt: now,
-            ),
-          );
-      final byKey = <String, int>{};
-      for (var dayId = 1; dayId <= 7; dayId++) {
-        for (final blockId in kBlockIds) {
-          final blockRefId = await _db.into(_db.templateBlocks).insert(
-                TemplateBlocksCompanion.insert(
-                  templateId: newId,
-                  dayId: dayId,
-                  blockId: blockId,
-                ),
-              );
-          byKey['$dayId/$blockId'] = blockRefId;
-        }
-      }
-      for (final blockJson in blocksRaw) {
-        if (blockJson is! Map<String, dynamic>) continue;
-        final dayId = blockJson['dayId'];
-        final blockId = blockJson['blockId'];
-        if (dayId is! int || blockId is! String) continue;
-        final blockRefId = byKey['$dayId/$blockId'];
-        if (blockRefId == null) continue;
-        final exs = blockJson['exercises'];
-        if (exs is! List) continue;
-        var pos = 0;
-        for (final ex in exs) {
-          if (ex is! Map<String, dynamic>) continue;
-          await _db.into(_db.templateExercises).insert(
-                TemplateExercisesCompanion.insert(
-                  blockRefId: blockRefId,
-                  position: pos++,
-                  exerciseId: uuid.v4(),
-                  name: (ex['name'] as String?) ?? '',
-                  sets: (ex['sets'] as num?)?.toInt() ?? 1,
-                  target: (ex['target'] as String?) ?? '',
-                  restSeconds: (ex['restSeconds'] as num?)?.toInt() ?? 60,
-                  note: Value((ex['note'] as String?) ?? ''),
-                ),
-              );
-        }
-      }
-      return newId;
-    });
+    final blocksSpec = [
+      for (final b in blocksRaw)
+        if (b is Map<String, dynamic>) b,
+    ];
+    return _templates.createTemplateFromImport(templateName, blocksSpec);
   }
 
   /// First-launch seeding of workout history from the bundled asset. No-op if
   /// the workout_logs table already has rows.
   Future<ImportStats?> autoSeedFromBundledHistory() async {
-    final existing = await _db.select(_db.workoutLogs).get();
+    final existing = await _workouts.getAllLogs();
     if (existing.isNotEmpty) return null;
     try {
       final text = await rootBundle.loadString('assets/seed/history.json');

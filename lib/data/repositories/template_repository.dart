@@ -242,6 +242,88 @@ class TemplateRepository {
     await _touch(blockRefId);
   }
 
+  // --- Export / Import helpers ---
+
+  /// Load a template + all its blocks + exercises for export.
+  /// Returns null if no template with [id] exists.
+  Future<(Template, List<TemplateBlock>, Map<int, List<TemplateExercise>>)?> getTemplateForExport(int id) async {
+    final template = await findById(id);
+    if (template == null) return null;
+    final blocks = await (db.select(db.templateBlocks)
+          ..where((b) => b.templateId.equals(id)))
+        .get();
+    final result = <int, List<TemplateExercise>>{};
+    for (final b in blocks) {
+      final exs = await (db.select(db.templateExercises)
+            ..where((e) => e.blockRefId.equals(b.id))
+            ..orderBy([(e) => OrderingTerm.asc(e.position)]))
+          .get();
+      result[b.id] = exs;
+    }
+    return (template, blocks, result);
+  }
+
+  /// Create a new template from an import spec. Inserts the template row,
+  /// scaffolds all 7 × kBlockIds block slots, then populates exercises from
+  /// [blocksSpec]. Returns the new template's row id.
+  ///
+  /// [blocksSpec] elements must have keys: dayId (int), blockId (String),
+  /// exercises (List of maps with name/sets/target/restSeconds/note).
+  Future<int> createTemplateFromImport(
+    String templateName,
+    List<Map<String, dynamic>> blocksSpec,
+  ) async {
+    return db.transaction(() async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final newId = await db.into(db.templates).insert(
+            TemplatesCompanion.insert(
+              name: templateName,
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      final byKey = <String, int>{};
+      for (var dayId = 1; dayId <= 7; dayId++) {
+        for (final blockId in kBlockIds) {
+          final blockRefId = await db.into(db.templateBlocks).insert(
+                TemplateBlocksCompanion.insert(
+                  templateId: newId,
+                  dayId: dayId,
+                  blockId: blockId,
+                ),
+              );
+          byKey['$dayId/$blockId'] = blockRefId;
+        }
+      }
+      for (final blockJson in blocksSpec) {
+        final dayId = blockJson['dayId'];
+        final blockId = blockJson['blockId'];
+        if (dayId is! int || blockId is! String) continue;
+        final blockRefId = byKey['$dayId/$blockId'];
+        if (blockRefId == null) continue;
+        final exs = blockJson['exercises'];
+        if (exs is! List) continue;
+        var pos = 0;
+        for (final ex in exs) {
+          if (ex is! Map<String, dynamic>) continue;
+          await db.into(db.templateExercises).insert(
+                TemplateExercisesCompanion.insert(
+                  blockRefId: blockRefId,
+                  position: pos++,
+                  exerciseId: _uuid.v4(),
+                  name: (ex['name'] as String?) ?? '',
+                  sets: (ex['sets'] as num?)?.toInt() ?? 1,
+                  target: (ex['target'] as String?) ?? '',
+                  restSeconds: (ex['restSeconds'] as num?)?.toInt() ?? 60,
+                  note: Value((ex['note'] as String?) ?? ''),
+                ),
+              );
+        }
+      }
+      return newId;
+    });
+  }
+
   Future<void> _touch(int blockRefId) async {
     final block = await (db.select(db.templateBlocks)..where((b) => b.id.equals(blockRefId)))
         .getSingleOrNull();
