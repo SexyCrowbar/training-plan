@@ -4,362 +4,159 @@
 
 | Layer | Technology |
 |---|---|
-| Language | Kotlin |
-| UI | Jetpack Compose + Material 3 |
-| Architecture | MVVM (Model-View-ViewModel) |
-| Database | Room (SQLite, on-device) |
-| State | ViewModel + StateFlow |
-| Navigation | Jetpack Compose Navigation |
-| Charts | Vico (Compose-native charting library) |
-| Reminders | AlarmManager + BroadcastReceiver |
-| Settings | Jetpack DataStore (Preferences) |
-| Build | Gradle (Kotlin DSL) |
+| Language | Dart 3.11 |
+| UI | Flutter 3.41 (Material 3) |
+| State / DI | Riverpod 2 (providers + repositories — no separate VM layer) |
+| Database | Drift 2 / SQLite, on-device only |
+| Navigation | go_router 14 — `ShellRoute` (5-tab bottom nav) |
+| Charts | fl_chart |
+| Notifications | `flutter_local_notifications` + `android_alarm_manager_plus` |
+| Build | Flutter Gradle Plugin (Gradle DSL); compileSdk/targetSdk via `flutter.compileSdkVersion` (36 on Flutter 3.41), minSdk = 24 |
 
-All data is stored on-device in a Room database. No server, no network required.
+No server, no network. All data stays on the device.
 
 ---
 
-## Project Structure
+## Project Layout
 
 ```
-app/src/main/java/com/protocol/app/
-│
-├── data/
-│   ├── db/
-│   │   ├── AppDatabase.kt          ← Room database, singleton
-│   │   ├── WorkoutLogDao.kt        ← queries: insert, getAll, getByDay, delete
-│   │   ├── ExerciseSetDao.kt       ← queries: insert, getByLog
-│   │   └── GtgLogDao.kt            ← queries: getTodayCount, upsert
-│   ├── model/
-│   │   ├── WorkoutLog.kt           ← @Entity: id, date, dayId, blockId, blockName
-│   │   ├── ExerciseSet.kt          ← @Entity: id, logId, exerciseId, weight, reps, done
-│   │   └── GtgLog.kt               ← @Entity: id, date, dayId, count
-│   └── repository/
-│       └── WorkoutRepository.kt    ← single source of truth; wraps DAOs
-│
-├── domain/
-│   └── plan/
-│       └── TrainingPlan.kt         ← the PLAN data as Kotlin data classes (no DB)
-│
-├── ui/
-│   ├── theme/
-│   │   ├── Color.kt                ← Iron (gold) + Body (cyan) color palettes
-│   │   ├── Theme.kt                ← dynamic MaterialTheme switching by day type
-│   │   └── Type.kt                 ← typography scale
-│   ├── screens/
-│   │   ├── train/
-│   │   │   ├── TrainScreen.kt      ← home: day tabs, GTG counter, block cards
-│   │   │   └── TrainViewModel.kt
-│   │   ├── workout/
-│   │   │   ├── WorkoutScreen.kt    ← active block: set rows, rest timer, finish
-│   │   │   └── WorkoutViewModel.kt
-│   │   ├── history/
-│   │   │   ├── HistoryScreen.kt    ← logged sessions list, edit, delete
-│   │   │   └── HistoryViewModel.kt
-│   │   └── stats/
-│   │       ├── StatsScreen.kt      ← 1RM progress chart per lift
-│   │       └── StatsViewModel.kt
-│   ├── screens/
-│   │   └── settings/
-│   │       ├── SettingsScreen.kt   ← reminders toggle, active hours picker, preview
-│   │       └── SettingsViewModel.kt
-│   └── components/
-│       ├── BlockCard.kt            ← reusable block card (done / active states)
-│       ├── GtgCounter.kt           ← big number + +/- buttons + dots
-│       ├── SetRow.kt               ← checkbox + weight input + reps input
-│       ├── RestTimer.kt            ← sticky countdown bar
-│       ├── DayTabs.kt              ← horizontal scrollable day selector
-│       └── BottomNav.kt            ← Train / Stats / History nav bar
-│
-├── notifications/
-│   ├── GtgReminderReceiver.kt      ← BroadcastReceiver: fires notification, schedules next
-│   ├── BootReceiver.kt             ← restores alarms after device reboot
-│   ├── NotificationHelper.kt       ← builds and posts the GTG notification
-│   └── ReminderScheduler.kt        ← schedules / cancels AlarmManager alarms
-│
-├── settings/
-│   └── ReminderPreferences.kt      ← DataStore schema: enabled, startHour, endHour
-│
-└── MainActivity.kt                 ← single activity, hosts NavHost
+lib/
+  main.dart                # bootstrap: AlarmManager init + notifications + ProviderScope
+  app.dart                 # MaterialApp.router
+  router.dart              # GoRouter + ShellRoute (5-tab bottom nav)
+  app_providers.dart       # top-level Riverpod providers
+
+  data/
+    db/                    # Drift tables, DAOs, codegen (app_database.dart + *.g.dart)
+    models/                # plain Dart DTOs for import/export JSON
+    repositories/          # Drift-backed repositories (template, workout, gtg, settings)
+
+  domain/
+    plan/                  # TrainingPlan constant, DayTheme enum, Day/Block/Exercise models
+    util/                  # week math (dayOfCycle, parseDateKey), e1RM formula
+
+  features/
+    train/                 # Train screen + day-advance controller
+    workout/               # Active-block screen + rest timer
+    history/               # Session list
+    stats/                 # e1RM chart + recent sessions
+    settings/              # Reminder config + import/export (JSON)
+    templates/             # Template list + editor + picker sheet
+
+  notifications/           # _alarmCallback entry-point + ReminderScheduler
+  theme/                   # ColorSchemes + theme-per-day provider
+  widgets/                 # Shared widgets (BottomNav, SetRow, modals)
+
+assets/
+  icons/                   # Launcher icon source PNGs
+  seed/history.json        # First-run seed data
+
+docs/
+  ARCHITECTURE.md          # This file
+  ui-mockup.html           # Visual reference
 ```
 
 ---
 
-## Data Model
+## Data Model (Drift / SQLite, schemaVersion = 1)
 
-### `WorkoutLog`
-```kotlin
-@Entity
-data class WorkoutLog(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val date: Long,          // epoch millis
-    val dayId: Int,          // 1–5
-    val blockId: String,     // "power", "hypertrophy", etc.
-    val blockName: String,
-    val completedSets: Int
-)
-```
+| Table | Key Columns | Notes |
+|---|---|---|
+| `Templates` | `id`, `name`, `createdAt`, `updatedAt` | Named workout templates |
+| `TemplateBlocks` | `id`, `templateId` → Templates, `dayId`, `blockId` | Unique on (templateId, dayId, blockId) |
+| `TemplateExercises` | `id`, `blockRefId` → TemplateBlocks, `position`, `exerciseId`, `name`, `sets`, `target`, `restSeconds`, `note` | Ordered exercise list within a block |
+| `WorkoutLogs` | `id`, `date` (epoch ms), `templateId` nullable, `dayId`, `blockId`, `blockName`, `blockIcon`, `theme` | Freezes block name + icon + theme at save time — template edits never rewrite history |
+| `ExerciseSets` | `id`, `logId` → WorkoutLogs, `exerciseId`, `exerciseName`, `setNumber`, `weightKg` nullable, `reps` nullable, `completed` | Freezes exercise name at save time |
+| `GtgLogs` | PK (`date` "YYYY-MM-DD", `dayId`), `count` | Daily GTG tally; resets at midnight |
+| `AppSettings` | PK `key`, `value` | Key/value store: activeTemplateId, weekStartDate, remindersEnabled, startHour, endHour |
 
-### `ExerciseSet`
-```kotlin
-@Entity
-data class ExerciseSet(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val logId: Long,         // FK → WorkoutLog.id
-    val exerciseId: String,  // "bp", "dips", etc.
-    val setNumber: Int,
-    val weightKg: Float?,
-    val reps: Int?,
-    val completed: Boolean
-)
-```
-
-### `GtgLog`
-```kotlin
-@Entity(indices = [Index(value = ["date", "dayId"], unique = true)])
-data class GtgLog(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val date: String,        // "2026-04-16"
-    val dayId: Int,
-    val count: Int
-)
-```
+Foreign keys use cascade-delete (TemplateBlocks → Templates, TemplateExercises → TemplateBlocks, ExerciseSets → WorkoutLogs); WorkoutLogs.templateId is set-null on template delete.
 
 ---
 
-## MVVM Flow
+## Training Plan (7-day cycle)
 
-```
-Composable Screen
-      ↕  collectAsState()
-  ViewModel  (StateFlow<UiState>)
-      ↕  suspend fun / Flow
-  Repository
-      ↕
-  Room DAO  →  SQLite on device
-```
+Defined statically in `lib/domain/plan/training_plan.dart`. Day metadata (name, theme, tag, gtgTarget, gtgEx) is NOT editable per template — only the per-block exercise list is.
 
-Each screen has a matching `UiState` data class. ViewModels expose `StateFlow<UiState>` that screens observe with `collectAsState()`. Side effects (timer, haptics, screen lock) live in the ViewModel or a composable `LaunchedEffect`.
+| Day | Theme | Summary |
+|---|---|---|
+| 1 | `iron` | Chest Power |
+| 2 | `body` | Back Power |
+| 3 | `iron` | Leg Maintenance / Shoulder Density |
+| 4 | `recovery` | Active Recovery (reduced GTG target) |
+| 5 | `body` | Tricep Power |
+| 6 | `recovery` | Active Recovery — walk & mobility (reduced GTG target) |
+| 7 | `rest` | Full Rest — no GTG (gtgTarget == 0) |
+
+`DayTheme` enum: `iron`, `body`, `recovery`, `rest`. The UI switches Material 3 color schemes based on the current day's theme.
 
 ---
 
-## Theming
+## State Flow (Riverpod)
 
-Two Material 3 dark color schemes — switched dynamically based on `dayType`:
-
-```kotlin
-// Color.kt
-val IronPrimary  = Color(0xFFF0C040)  // gold
-val IronSurface  = Color(0xFF1A1F2E)
-val IronBg       = Color(0xFF0F1117)
-
-val BodyPrimary  = Color(0xFF22D3EE)  // cyan
-val BodySurface  = Color(0xFF0D2535)
-val BodyBg       = Color(0xFF081520)
-
-// Theme.kt
-@Composable
-fun ProtocolTheme(dayType: DayType, content: @Composable () -> Unit) {
-    val colors = if (dayType == DayType.IRON) ironDarkColors else bodyDarkColors
-    MaterialTheme(colorScheme = colors, content = content)
-}
 ```
+AppDatabase (Provider)
+       ↓
+Repository Providers (template, workout, gtg, settings — each a Provider wrapping a Drift-backed class)
+       ↓
+StreamProviders / FutureProviders (activeTemplateProvider, todayGtgProvider, weekStartProvider, …)
+       ↓
+StateProviders (currentDayProvider — seeded once from derivedDayProvider via ref.read)
+       ↓
+ConsumerWidget screens (watch providers, rebuild on change)
+```
+
+Key providers in `app_providers.dart`:
+
+- **`dateTickerProvider`** — emits `DateTime.now()` on startup then at each local midnight; drives day advancement without polling.
+- **`derivedDayProvider`** — computes `dayOfCycle(now, weekStart)` from `dateTickerProvider` + `weekStartProvider`. Uses the same `dayOfCycle` helper as the alarm callback so the UI and reminders always agree on which day it is.
+- **`currentDayProvider`** — `StateProvider<int>` seeded once from `derivedDayProvider` via `ref.read` (not `ref.watch`) so lifecycle events (minimize / resume) do not reset the displayed day. A listener in `TrainScreen` advances it when `derivedDay` crosses midnight.
+- **`activeTemplateProvider`** — streams `ResolvedTemplate?` from the active template ID stored in `AppSettings`.
+- **`todayGtgProvider`** — streams today's GTG counts per dayId; re-subscribes at each `dateTickerProvider` tick.
+- **`seedBootProvider`** — `FutureProvider` that runs `TemplateSeeder.seedOrMigrate()` once on first launch.
+
+---
+
+## GTG Reminder Chain
+
+`ReminderScheduler.scheduleNext` arms a single `AndroidAlarmManager.oneShotAt` alarm (inexact, `wakeup: true`, `rescheduleOnReboot: true`, `allowWhileIdle: true`). There is no periodic alarm and no separate boot receiver — `rescheduleOnReboot` re-arms the alarm automatically after reboot.
+
+When the alarm fires it executes `_alarmCallback` — a top-level function marked `@pragma('vm:entry-point')` that runs in a background isolate:
+
+1. Opens its own short-lived `AppDatabase` connection (isolates cannot share the main app's DB).
+2. Reads `remindersEnabled`, `startHour`, `endHour`, and `weekStartDate` from `AppSettings`.
+3. Checks whether now is within the active window (`startHour ≤ now.hour < endHour`).
+4. Computes `dayId = rotationDayId(now, weekStart)` (same `dayOfCycle` math as the UI).
+5. Skips the notification if `TrainingPlan.days[dayId].gtgTarget == 0` (i.e., day 7 full rest).
+6. Posts the GTG notification via `NotificationHelper` if the window + rest-day checks pass.
+7. Calls `ReminderScheduler.scheduleNext` to arm the next alarm (self-healing chain).
+8. Closes the DB.
+
+This chain approach is more reliable than `PeriodicWorkRequest` (minimum 15-minute interval, drifts) and more battery-friendly than a persistent background service.
 
 ---
 
 ## Navigation
 
-Single `NavHost` in `MainActivity`. Three bottom nav destinations + a transient workout route + settings:
+`lib/router.dart` defines a single `GoRouter` with a top-level `ShellRoute` that renders the 5-tab `BottomNav`. The shell contains five `NoTransitionPage` destinations:
 
 ```
-train  (start destination)
-  └─ workout/{dayId}/{blockIndex}
-stats
-history
-settings  (reachable via gear icon in Train top bar)
+/           → TrainScreen   (default)
+/stats      → StatsScreen
+/history    → HistoryScreen
+/templates  → TemplatesScreen
+/settings   → SettingsScreen
 ```
 
----
+Two modal-push routes outside the shell:
 
-## Key Android Integrations
-
-**Screen wake lock** — keeps screen on during an active workout block:
-```kotlin
-// WorkoutViewModel.kt
-window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 ```
-
-**Haptic feedback** — on set completion and GTG tap:
-```kotlin
-view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-```
-
-**Rest timer** — coroutine-based countdown in ViewModel:
-```kotlin
-viewModelScope.launch {
-    repeat(seconds) { elapsed ->
-        delay(1000)
-        _uiState.update { it.copy(timerRemaining = seconds - elapsed - 1) }
-    }
-}
-```
-
-**1RM calculation** — Epley formula, same as current JS:
-```kotlin
-fun estimatedOneRepMax(weight: Float, reps: Int) = weight * (1 + reps / 30f)
+/workout/:dayId/:blockId   → WorkoutScreen
+/templates/:templateId     → TemplateEditorScreen
 ```
 
 ---
 
-## GTG Hourly Reminders
+## Theming
 
-### How it works
-
-`ReminderScheduler` uses `AlarmManager.setExactAndAllowWhileIdle()` to schedule a single alarm one hour ahead. When the alarm fires, `GtgReminderReceiver` decides what to do next:
-
-1. Is the current time within the user's active window? → post notification + schedule next alarm for `now + 1 hour`
-2. Is the current time past `endHour`? → schedule next alarm for tomorrow at `startHour`
-3. Is today a rest day (Day 5)? → skip notification, still schedule next check
-
-This "chain scheduling" approach is more reliable than `PeriodicWorkRequest` (which has a 15-minute minimum and drifts) and more battery-friendly than a constant background service.
-
-```
-[Alarm fires at 10:00]
-       ↓
-GtgReminderReceiver.onReceive()
-       ↓
-  within active hours?  ──yes──→  post notification
-  & not rest day?                 schedule alarm for 11:00
-       │
-      no
-       ↓
-  past end hour?  ──yes──→  schedule alarm for tomorrow 09:00
-       │
-      no (before start hour)
-       ↓
-  schedule alarm for startHour today
-```
-
-### Settings stored in DataStore
-
-```kotlin
-// ReminderPreferences.kt
-object ReminderPreferences {
-    val ENABLED     = booleanPreferencesKey("reminders_enabled")   // default: true
-    val START_HOUR  = intPreferencesKey("start_hour")              // default: 9  (09:00)
-    val END_HOUR    = intPreferencesKey("end_hour")                 // default: 18 (18:00)
-}
-```
-
-### Notification content
-
-```kotlin
-// NotificationHelper.kt
-NotificationCompat.Builder(context, CHANNEL_ID)
-    .setSmallIcon(R.drawable.ic_dumbbell)
-    .setContentTitle("Grease the Groove")
-    .setContentText("Time for a set of chin-ups. Keep it easy — no sweat.")
-    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-    .setAutoCancel(true)
-    .build()
-```
-
-### AndroidManifest additions
-
-```xml
-<!-- Permissions -->
-<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
-<!-- Receivers -->
-<receiver android:name=".notifications.GtgReminderReceiver"
-          android:exported="false" />
-<receiver android:name=".notifications.BootReceiver"
-          android:exported="true">
-    <intent-filter>
-        <action android:name="android.intent.action.BOOT_COMPLETED" />
-    </intent-filter>
-</receiver>
-```
-
-### Settings screen (SettingsScreen.kt)
-
-Accessible via a gear icon `⚙` in the top bar of `TrainScreen`. Contains:
-
-- **Reminders toggle** — enables/disables the entire system; cancels all pending alarms when turned off
-- **Start hour picker** — hour of day when reminders begin (e.g. 09:00)
-- **End hour picker** — hour of day when reminders stop (e.g. 18:00)
-- **Preview row** — shows the list of hours that will fire given the current config: `09:00 · 10:00 · 11:00 · ... · 18:00`
-- Any change immediately calls `ReminderScheduler.reschedule()` to apply the new window
-
-### Gradle additions
-
-```kotlin
-// DataStore
-implementation("androidx.datastore:datastore-preferences:1.1.1")
-```
-
-`AlarmManager` and `BroadcastReceiver` are part of the Android SDK — no extra dependency needed.
-
----
-
-## Gradle Dependencies
-
-```kotlin
-// build.gradle.kts (app)
-dependencies {
-    // Compose
-    implementation(platform("androidx.compose:compose-bom:2025.04.00"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.activity:activity-compose:1.9.0")
-
-    // Navigation
-    implementation("androidx.navigation:navigation-compose:2.7.7")
-
-    // ViewModel
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-
-    // Room
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    kapt("androidx.room:room-compiler:2.6.1")
-
-    // Charts
-    implementation("com.patrykandpatrick.vico:compose-m3:1.13.1")
-
-    // DataStore (reminder settings persistence)
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
-}
-```
-
----
-
-## What Carries Over from the Mockup
-
-The `ui-mockup.html` is the direct design reference for all Compose screens. Every screen, component, and interaction maps 1:1:
-
-| HTML mockup | Compose equivalent |
-|---|---|
-| Day tabs | `DayTabs.kt` — `LazyRow` of `FilterChip` |
-| GTG counter card | `GtgCounter.kt` composable |
-| Block cards | `BlockCard.kt` composable |
-| Set rows (checkbox + inputs) | `SetRow.kt` composable |
-| Sticky timer bar | `RestTimer.kt` — `Box` with `Modifier.zIndex` |
-| Bottom nav | `BottomNav.kt` — `NavigationBar` |
-| Iron / Body themes | `ProtocolTheme` with dynamic `colorScheme` |
-
----
-
-## What Changes vs the Web Architecture
-
-| Web (previous) | Android (current) |
-|---|---|
-| React + Vite | Jetpack Compose |
-| Tailwind CSS | Material 3 + custom ColorScheme |
-| Express server | No server — on-device only |
-| JSON file storage | Room SQLite database |
-| Browser localStorage | Room DAO + Repository |
-| `node server.js` to run | Install APK on phone |
-| LAN access from phone | App runs natively on phone |
+Two Material 3 dark color schemes (iron: gold primary; body: cyan primary) selected by `DayTheme`. `recovery` days use the `iron` scheme with muted accents; `rest` days use a neutral scheme. All muted / secondary text is routed through an AA-safe `textMid` token to meet WCAG contrast requirements.

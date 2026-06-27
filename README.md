@@ -4,7 +4,7 @@ Native Android app for the 7-day distributed micro-dose training protocol. Flutt
 
 ## Stack
 
-- **Framework**: Flutter 3.24+ / Dart 3.5+ (`minSdk=24`, `targetSdk=34`, `compileSdk=35`)
+- **Framework**: Flutter 3.41+ / Dart 3.11+ (`minSdk=24`; compileSdk/targetSdk via `flutter.compileSdkVersion` — 36 on Flutter 3.41)
 - **State**: Riverpod 2
 - **Routing**: go_router with `ShellRoute` bottom nav
 - **DB**: Drift (SQLite), on-device
