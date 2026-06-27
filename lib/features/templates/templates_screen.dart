@@ -16,7 +16,7 @@ class TemplatesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final templates = ref.watch(allTemplatesProvider).valueOrNull ?? const [];
+    final templatesAsync = ref.watch(allTemplatesProvider);
     final activeId = ref.watch(activeTemplateIdProvider).valueOrNull;
     final scheme = Theme.of(context).colorScheme;
 
@@ -36,113 +36,149 @@ class TemplatesScreen extends ConsumerWidget {
         label: const Text('New'),
         onPressed: () => _createTemplate(context, ref),
       ),
-      body: templates.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: templates.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, i) {
-                final t = templates[i];
-                final active = t.id == activeId;
-                return Card(
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(14),
-                    onTap: () => context.push('/templates/${t.id}'),
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        t.name,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    if (active)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: scheme.primary.withValues(
-                                            alpha: 0.18,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            6,
-                                          ),
-                                        ),
+      body: templatesAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('$e')),
+        data: (templates) => templates.isEmpty
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.fitness_center,
+                        size: 56,
+                        color: scheme.onSurface.withValues(alpha: 0.25),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No templates yet',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: scheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tap New to create your first training template.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: scheme.onSurface.withValues(alpha: 0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: templates.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (context, i) {
+                  final t = templates[i];
+                  final active = t.id == activeId;
+                  return Card(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () => context.push('/templates/${t.id}'),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
                                         child: Text(
-                                          'ACTIVE',
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w900,
-                                            letterSpacing: 0.8,
-                                            color: scheme.primary,
+                                          t.name,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w800,
                                           ),
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                  ],
-                                ),
-                                Text(
-                                  'Updated ${DateFormat('d MMM yyyy').format(DateTime.fromMillisecondsSinceEpoch(t.updatedAt))}',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: scheme.onSurface.withValues(
-                                      alpha: 0.55,
+                                      if (active)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: scheme.primary.withValues(
+                                              alpha: 0.18,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'ACTIVE',
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 0.8,
+                                              color: scheme.primary,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  Text(
+                                    'Updated ${DateFormat('d MMM yyyy').format(DateTime.fromMillisecondsSinceEpoch(t.updatedAt))}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: scheme.onSurface.withValues(
+                                        alpha: 0.55,
+                                      ),
                                     ),
                                   ),
+                                ],
+                              ),
+                            ),
+                            PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert),
+                              onSelected: (action) =>
+                                  _onAction(context, ref, action, t, active),
+                              itemBuilder: (_) => [
+                                if (!active)
+                                  const PopupMenuItem(
+                                    value: 'activate',
+                                    child: Text('Set active'),
+                                  ),
+                                const PopupMenuItem(
+                                  value: 'rename',
+                                  child: Text('Rename'),
                                 ),
+                                const PopupMenuItem(
+                                  value: 'duplicate',
+                                  child: Text('Duplicate'),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'export',
+                                  child: Text('Export…'),
+                                ),
+                                if (!active)
+                                  const PopupMenuItem(
+                                    value: 'delete',
+                                    child: Text('Delete'),
+                                  ),
                               ],
                             ),
-                          ),
-                          PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert),
-                            onSelected: (action) =>
-                                _onAction(context, ref, action, t, active),
-                            itemBuilder: (_) => [
-                              if (!active)
-                                const PopupMenuItem(
-                                  value: 'activate',
-                                  child: Text('Set active'),
-                                ),
-                              const PopupMenuItem(
-                                value: 'rename',
-                                child: Text('Rename'),
-                              ),
-                              const PopupMenuItem(
-                                value: 'duplicate',
-                                child: Text('Duplicate'),
-                              ),
-                              const PopupMenuItem(
-                                value: 'export',
-                                child: Text('Export…'),
-                              ),
-                              if (!active)
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: Text('Delete'),
-                                ),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+      ),
     );
   }
 
@@ -168,7 +204,13 @@ class TemplatesScreen extends ConsumerWidget {
         if (name != null && name.isNotEmpty) await repo.rename(t.id, name);
         break;
       case 'duplicate':
-        await repo.duplicate(t.id, '${t.name} copy');
+        final allNames = ref
+            .read(allTemplatesProvider)
+            .valueOrNull
+            ?.map((tmpl) => tmpl.name)
+            .toSet();
+        final dupName = uniqueCopyName(t.name, allNames ?? const <String>{});
+        await repo.duplicate(t.id, dupName);
         break;
       case 'export':
         await _exportTemplate(context, ref, t);
@@ -245,6 +287,18 @@ class TemplatesScreen extends ConsumerWidget {
       );
     }
   }
+}
+
+/// Returns a unique copy name for [base] that is not in [existing].
+/// Produces "[base] copy", then "[base] copy 2", "[base] copy 3", …
+String uniqueCopyName(String base, Set<String> existing) {
+  final first = '$base copy';
+  if (!existing.contains(first)) return first;
+  var n = 2;
+  while (existing.contains('$base copy $n')) {
+    n++;
+  }
+  return '$base copy $n';
 }
 
 String _safeFileName(String name) {

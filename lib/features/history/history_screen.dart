@@ -267,7 +267,9 @@ class _HistoryCard extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 11,
                               color: scheme.onSurface.withValues(alpha: 0.7),
-                              fontFamily: 'monospace',
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
                             ),
                           ),
                         ),

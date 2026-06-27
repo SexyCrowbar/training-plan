@@ -42,7 +42,7 @@ class RestTimerBar extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
-                      fontFamily: 'monospace',
+                      fontFeatures: const [FontFeature.tabularFigures()],
                       color: scheme.primary,
                     ),
                   ),

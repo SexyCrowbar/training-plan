@@ -1,6 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../../theme/colors.dart';
+
 /// Line chart of estimated 1-rep-max values over time. Replaces the SVG
 /// polyline in `src/components/StatsScreen.jsx:47-63`.
 ///
@@ -54,7 +56,39 @@ class E1rmChart extends StatelessWidget {
             strokeWidth: 1,
           ),
         ),
-        titlesData: const FlTitlesData(show: false),
+        titlesData: FlTitlesData(
+          show: true,
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          bottomTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 44,
+              // Show a label every half of the visible range so we get ~3
+              // ticks: bottom, mid, top.
+              interval:
+                  ((maxY + pad) - (minY - pad).clamp(0.0, double.infinity)) / 2,
+              getTitlesWidget: (value, meta) => SideTitleWidget(
+                axisSide: meta.axisSide,
+                child: Text(
+                  '${value.round()}',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    color: scheme.textMid,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
         borderData: FlBorderData(show: false),
         lineBarsData: [
           LineChartBarData(

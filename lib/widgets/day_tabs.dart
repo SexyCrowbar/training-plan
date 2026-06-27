@@ -11,7 +11,7 @@ class DayTabs extends ConsumerWidget {
     final current = ref.watch(currentDayProvider);
     final scheme = Theme.of(context).colorScheme;
     return SizedBox(
-      height: 44,
+      height: 48,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -25,7 +25,7 @@ class DayTabs extends ConsumerWidget {
             onTap: () => ref.read(currentDayProvider.notifier).state = dayId,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: selected ? scheme.primary : scheme.surface,
                 borderRadius: BorderRadius.circular(10),

@@ -320,7 +320,9 @@ class _LiftDetail extends ConsumerWidget {
                                   style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w800,
-                                    fontFamily: 'monospace',
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures(),
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(width: 8),

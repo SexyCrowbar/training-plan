@@ -19,6 +19,13 @@ class TemplateEditorScreen extends ConsumerStatefulWidget {
 
 class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
   int _selectedDay = 1;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,12 +85,12 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
           return Column(
             children: [
               SizedBox(
-                height: 44,
+                height: 48,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 6,
+                    vertical: 4,
                   ),
                   itemCount: 7,
                   separatorBuilder: (_, _) => const SizedBox(width: 8),
@@ -97,7 +104,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                         duration: const Duration(milliseconds: 160),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
-                          vertical: 8,
+                          vertical: 10,
                         ),
                         decoration: BoxDecoration(
                           color: selected ? scheme.primary : scheme.surface,
@@ -142,6 +149,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
               else
                 Expanded(
                   child: ListView(
+                    controller: _scrollController,
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
                     children: [
                       for (final blockId in kBlockIds) ...[
@@ -210,6 +218,16 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       target: '8-10 reps',
       restSeconds: 90,
     );
+    // Scroll to the bottom so the new exercise row is visible.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 }
 
