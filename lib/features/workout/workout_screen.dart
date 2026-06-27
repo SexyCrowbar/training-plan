@@ -118,92 +118,95 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
   Widget _exerciseBlock(TemplateExercise ex) {
     final rows = _setsByExercise[ex.id] ?? const [];
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              ex.name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${ex.sets} × ${ex.target}  •  Rest ${ex.restSeconds}s',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: scheme.textMid,
+    return Consumer(builder: (context, ref, _) {
+      final top = ref.watch(lastTopSetProvider(ex.name)).valueOrNull;
+      final topWeight = (top != null && top.reps != null && top.weightKg != null && top.weightKg! > 0)
+          ? top.weightKg
+          : null;
+
+      return Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                ex.name,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${ex.sets} × ${ex.target}  •  Rest ${ex.restSeconds}s',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: scheme.textMid,
+                      ),
                     ),
-                  ),
-                  Consumer(builder: (context, ref, _) {
-                    final top = ref.watch(lastTopSetProvider(ex.name)).valueOrNull;
-                    if (top == null || top.reps == null) return const SizedBox.shrink();
-                    final w = top.weightKg;
-                    final weightLabel = (w == null || w == 0) ? 'BW' : '${_formatKg(w)} kg';
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        'Last: $weightLabel × ${top.reps}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: scheme.primary.withValues(alpha: 0.85),
-                          fontWeight: FontWeight.w600,
+                    if (top != null && top.reps != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          'Last: ${(top.weightKg == null || top.weightKg == 0) ? 'BW' : '${_formatKg(top.weightKg!)} kg'} × ${top.reps}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: scheme.primary.withValues(alpha: 0.85),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-            if (ex.note.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  ex.note,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: scheme.textMid,
-                    fontStyle: FontStyle.italic,
-                  ),
+                  ],
                 ),
               ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const SizedBox(width: 24),
-                Expanded(flex: 3, child: _headerLabel('Weight (kg)')),
-                const SizedBox(width: 8),
-                Expanded(flex: 3, child: _headerLabel('Reps')),
-                const SizedBox(width: 8),
-                const SizedBox(width: 48, child: SizedBox()),
-              ],
-            ),
-            for (var i = 0; i < rows.length; i++)
-              SetRow(
-                key: ValueKey('${ex.id}_$i'),
-                setNumber: i + 1,
-                data: rows[i],
-                suggestedTarget: ex.target,
-                onChanged: (next, {required triggeredByCheckbox}) {
-                  setState(() {
-                    rows[i] = next;
-                    _setsByExercise[ex.id] = rows;
-                  });
-                  if (triggeredByCheckbox && next.done && ex.restSeconds > 0) {
-                    ref.read(restTimerProvider.notifier).start(ex.restSeconds);
-                  }
-                },
+              if (ex.note.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    ex.note,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: scheme.textMid,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const SizedBox(width: 24),
+                  Expanded(flex: 3, child: _headerLabel('Weight (kg)')),
+                  const SizedBox(width: 8),
+                  Expanded(flex: 3, child: _headerLabel('Reps')),
+                  const SizedBox(width: 8),
+                  const SizedBox(width: 48, child: SizedBox()),
+                ],
               ),
-          ],
+              for (var i = 0; i < rows.length; i++)
+                SetRow(
+                  key: ValueKey('${ex.id}_$i'),
+                  setNumber: i + 1,
+                  data: rows[i],
+                  suggestedTarget: ex.target,
+                  suggestedWeight: topWeight,
+                  onChanged: (next, {required triggeredByCheckbox}) {
+                    setState(() {
+                      rows[i] = next;
+                      _setsByExercise[ex.id] = rows;
+                    });
+                    if (triggeredByCheckbox && next.done && ex.restSeconds > 0) {
+                      ref.read(restTimerProvider.notifier).start(ex.restSeconds);
+                    }
+                  },
+                ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _headerLabel(String text) => Text(
@@ -330,6 +333,13 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
         );
       }
       if (!context.mounted) return;
+      final savedCount = sets.where((s) => s.completed).length;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Block saved — $savedCount set${savedCount == 1 ? '' : 's'} logged'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
       context.pop();
     } catch (e) {
       if (!context.mounted) return;
