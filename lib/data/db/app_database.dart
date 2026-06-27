@@ -42,6 +42,7 @@ class TemplateExercises extends Table {
   TextColumn get note => text().withDefault(const Constant(''))();
 }
 
+@TableIndex(name: 'idx_workout_logs_date', columns: {#date})
 class WorkoutLogs extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get date => integer()(); // epoch millis
@@ -54,6 +55,8 @@ class WorkoutLogs extends Table {
   TextColumn get theme => text()();
 }
 
+@TableIndex(name: 'idx_exercise_sets_log_id', columns: {#logId})
+@TableIndex(name: 'idx_exercise_sets_exercise_name', columns: {#exerciseName})
 class ExerciseSets extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get logId =>
@@ -100,11 +103,27 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(QueryExecutor e) : super(e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_exercise_sets_log_id '
+              'ON exercise_sets (log_id);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_exercise_sets_exercise_name '
+              'ON exercise_sets (exercise_name);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_workout_logs_date '
+              'ON workout_logs (date);',
+            );
+          }
+        },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON;');
         },
