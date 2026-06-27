@@ -28,6 +28,9 @@ class _ProtocolAppState extends ConsumerState<ProtocolApp> with WidgetsBindingOb
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     ref.read(appLifecycleProvider.notifier).state = state;
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(dateTickerProvider);
+    }
   }
 
   @override

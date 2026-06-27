@@ -68,15 +68,18 @@ final allTemplatesProvider = StreamProvider<List<Template>>(
 ///   * "Restart cycle" (TrainScreen sets it to 1).
 /// Lifecycle changes (app minimize / resume / app switch) MUST NOT reset it —
 /// hence `ref.read` instead of `ref.watch` so the StateProvider doesn't rebuild
-/// when derivedDay re-emits.
+/// when derivedDay re-emits. On resume, `didChangeAppLifecycleState` invalidates
+/// `dateTickerProvider` which cascades through `derivedDayProvider` so the day
+/// advances if the date changed while the app was backgrounded.
 final currentDayProvider = StateProvider<int>((ref) {
   return ref.read(derivedDayProvider);
 });
 
 /// Current lifecycle state of the app — written by a WidgetsBindingObserver
-/// registered in ProtocolApp. Consumed by:
+/// registered in ProtocolApp. On resume, `didChangeAppLifecycleState` also
+/// invalidates `dateTickerProvider` to re-sync the displayed day. Consumed by:
 ///   * RestTimerController — to decide whether to post a background notification.
-///   * TrainScreen — to re-sync the active day when the app is resumed.
+///   * TrainScreen — to advance the active day when derivedDay changes.
 final appLifecycleProvider = StateProvider<AppLifecycleState>(
   (ref) => AppLifecycleState.resumed,
 );
@@ -141,9 +144,10 @@ final doneBlocksProvider = StreamProvider<Map<int, Set<String>>>((ref) async* {
   yield* ref.watch(workoutRepositoryProvider).watchDoneBlocks(weekStart);
 });
 
-final todayGtgProvider = StreamProvider<Map<int, int>>(
-  (ref) => ref.watch(gtgRepositoryProvider).watchTodayCounts(),
-);
+final todayGtgProvider = StreamProvider<Map<int, int>>((ref) {
+  ref.watch(dateTickerProvider); // re-subscribe at each midnight tick
+  return ref.watch(gtgRepositoryProvider).watchCountsFor(todayKey());
+});
 
 /// Top set (highest weight, tie-break highest reps) from the most recent
 /// completed session for an exercise name. Used by WorkoutScreen to show a

@@ -7,12 +7,13 @@ class GtgRepository {
   final AppDatabase db;
   GtgRepository(this.db);
 
-  Stream<Map<int, int>> watchTodayCounts() {
-    final key = todayKey();
-    return (db.select(db.gtgLogs)..where((g) => g.date.equals(key))).watch().map(
-          (rows) => {for (final r in rows) r.dayId: r.count},
-        );
+  Stream<Map<int, int>> watchCountsFor(String dateKey) {
+    return (db.select(db.gtgLogs)..where((g) => g.date.equals(dateKey)))
+        .watch()
+        .map((rows) => {for (final r in rows) r.dayId: r.count});
   }
+
+  Stream<Map<int, int>> watchTodayCounts() => watchCountsFor(todayKey());
 
   Future<int> countFor(int dayId, [String? dateStr]) async {
     final key = dateStr ?? todayKey();
