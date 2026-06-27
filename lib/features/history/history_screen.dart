@@ -154,8 +154,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 return scheme.primary;
               }),
               dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected))
+                if (states.contains(WidgetState.selected)) {
                   return scheme.primary;
+                }
                 if (states.contains(WidgetState.disabled)) return null;
                 return scheme.primary.withValues(alpha: 0.08);
               }),

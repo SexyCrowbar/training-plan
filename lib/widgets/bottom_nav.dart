@@ -16,8 +16,9 @@ class BottomNav extends StatelessWidget {
   int _indexFor(String loc) {
     for (var i = 0; i < _destinations.length; i++) {
       if (loc == _destinations[i].$1) return i;
-      if (_destinations[i].$1 != '/' && loc.startsWith(_destinations[i].$1))
+      if (_destinations[i].$1 != '/' && loc.startsWith(_destinations[i].$1)) {
         return i;
+      }
     }
     return 0;
   }

@@ -141,8 +141,9 @@ class _LiftDetail extends ConsumerWidget {
           .getSetsForExerciseName(liftName),
       builder: (context, snap) {
         final data = snap.data;
-        if (data == null)
+        if (data == null) {
           return const Center(child: CircularProgressIndicator());
+        }
 
         // Build per-session best e1RM.
         final grouped =
