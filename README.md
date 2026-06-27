@@ -9,11 +9,11 @@ Native Android app for the 7-day distributed micro-dose training protocol. Flutt
 - **Routing**: go_router with `ShellRoute` bottom nav
 - **DB**: Drift (SQLite), on-device
 - **Charts**: fl_chart
-- **Notifications**: `flutter_local_notifications` + `android_alarm_manager_plus` (chain-scheduled exact alarms)
+- **Notifications**: `flutter_local_notifications` + `android_alarm_manager_plus` (chain-scheduled inexact alarms)
 
 ## Install
 
-Requires [Flutter](https://docs.flutter.dev/get-started/install) 3.24+ with the Android toolchain configured (Android Studio or standalone SDK with platform-tools in `PATH`).
+Requires [Flutter](https://docs.flutter.dev/get-started/install) 3.41+ with the Android toolchain configured (Android Studio or standalone SDK with platform-tools in `PATH`).
 
 ```bash
 git clone https://github.com/SexyCrowbar/training-plan.git
@@ -60,7 +60,7 @@ dart run flutter_launcher_icons
 - **7-day rotating protocol** — 4 training days + 2 active-recovery days + 1 full rest day, auto-wrapping; theme-per-day (iron/body/recovery/rest)
 - **Editable templates** — create / duplicate / rename / delete named templates; each week points to an active template. "Default" is seeded from the stock plan and is resettable.
 - **Grease-the-Groove counter** — per-day sub-maximal set tally that resets at midnight
-- **GTG hourly reminders** — exact-alarm notifications within a configurable active window, automatically suppressed on the full rest day and re-armed after reboot
+- **GTG hourly reminders** — inexact hourly notifications within a configurable active window, automatically suppressed on the full rest day and re-armed after reboot
 - **Rest timer** — auto-starts on set-complete; per-exercise duration
 - **e1RM tracking** — estimated 1-rep max per lift, Epley formula, chart + recent-sessions view
 - **History snapshot** — workout logs preserve block + exercise names at save time, so editing a template never rewrites past sessions
@@ -115,5 +115,5 @@ docs/
 - The Drift schema lives in `lib/data/db/app_database.dart`. Bumping `schemaVersion` requires a matching migration step in `onUpgrade`.
 - `lib/domain/plan/training_plan.dart` is the immutable seed source. Editing it only affects fresh installs and "Reset to default" in the template editor.
 - `workout_logs` snapshot `block_name`, `block_icon`, `theme`, and each `exercise_name`. Template edits never rewrite past sessions.
-- `exercise_id` is a stable token generated on exercise creation; it joins history across rename edits.
+- `exercise_id` is a stable token generated on exercise creation; history is now joined by stable id (with a name fallback for legacy/imported rows where id is empty), so renaming an exercise keeps its stats series unified rather than splitting it.
 - GTG reminders chain-schedule one alarm at a time (`android_alarm_manager_plus.oneShotAt`). The callback posts a notification then enqueues the next one, so the chain self-heals on reboot via `onBoot`.

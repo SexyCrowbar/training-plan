@@ -81,15 +81,37 @@ class WorkoutRepository {
         .get();
   }
 
-  /// All sets for a given exercise name across history, joined with log dates.
-  /// Used by StatsScreen.
-  Future<List<ExerciseSetWithDate>> getSetsForExerciseName(String name) async {
+  /// All sets for a given exercise across history, joined with log dates.
+  ///
+  /// When [exerciseId] is non-null and non-empty, the WHERE clause matches rows
+  /// by id OR by name. The OR ensures legacy/imported rows that only have
+  /// exerciseId == '' but the same name are still included. When [exerciseId]
+  /// is null or empty the query falls back to matching by name only.
+  ///
+  /// Only completed sets are returned, ordered by log date ascending.
+  Future<List<ExerciseSetWithDate>> getSetsForExercise({
+    String? exerciseId,
+    required String exerciseName,
+  }) async {
     final query = db.select(db.exerciseSets).join([
       innerJoin(db.workoutLogs, db.workoutLogs.id.equalsExp(db.exerciseSets.logId)),
     ])
-      ..where(db.exerciseSets.exerciseName.equals(name))
       ..where(db.exerciseSets.completed.equals(true))
       ..orderBy([OrderingTerm.asc(db.workoutLogs.date)]);
+
+    if (exerciseId != null && exerciseId.isNotEmpty) {
+      // Match by stable id, OR by name only when the stored id is empty
+      // (legacy/imported rows that have no id yet). Rows that have a different
+      // non-empty id are excluded even if the name happens to match.
+      query.where(
+        db.exerciseSets.exerciseId.equals(exerciseId) |
+            (db.exerciseSets.exerciseId.equals('') &
+                db.exerciseSets.exerciseName.equals(exerciseName)),
+      );
+    } else {
+      query.where(db.exerciseSets.exerciseName.equals(exerciseName));
+    }
+
     final rows = await query.get();
     return rows.map((r) {
       final s = r.readTable(db.exerciseSets);
@@ -98,28 +120,60 @@ class WorkoutRepository {
     }).toList();
   }
 
+  /// All sets for a given exercise name across history, joined with log dates.
+  /// Used by StatsScreen (name-only picker path). Delegates to [getSetsForExercise].
+  Future<List<ExerciseSetWithDate>> getSetsForExerciseName(String name) {
+    return getSetsForExercise(exerciseName: name);
+  }
+
   /// Top set (highest weight, tie-break highest reps) from the most recent
-  /// completed session for [exerciseName]. Returns null if no prior completed
-  /// set exists. Null weight is treated as 0 for sort ordering so weighted sets
-  /// always rank above bodyweight, and within all-bodyweight sessions the set
-  /// with the most reps wins.
-  Future<ExerciseSet?> getLastSessionTopSet(String exerciseName) async {
-    final newest = await (db.select(db.exerciseSets).join([
+  /// completed session for the given exercise. When [exerciseId] is non-empty
+  /// the lookup uses the stable id (with a name fallback for legacy rows) so
+  /// the "Last: …" hint survives exercise renames. Falls back to name-only when
+  /// no id is provided. Returns null if no prior completed set exists.
+  Future<ExerciseSet?> getLastSessionTopSet(
+    String exerciseName, {
+    String? exerciseId,
+  }) async {
+    final resolvedId = (exerciseId != null && exerciseId.isNotEmpty) ? exerciseId : null;
+
+    final joinQuery = db.select(db.exerciseSets).join([
       innerJoin(db.workoutLogs, db.workoutLogs.id.equalsExp(db.exerciseSets.logId)),
     ])
-          ..where(db.exerciseSets.exerciseName.equals(exerciseName))
-          ..where(db.exerciseSets.completed.equals(true))
-          ..orderBy([OrderingTerm.desc(db.workoutLogs.date)])
-          ..limit(1))
-        .getSingleOrNull();
+      ..where(db.exerciseSets.completed.equals(true))
+      ..orderBy([OrderingTerm.desc(db.workoutLogs.date)])
+      ..limit(1);
+
+    if (resolvedId != null) {
+      // Match by stable id, OR by name only for legacy/imported rows (id='').
+      joinQuery.where(
+        db.exerciseSets.exerciseId.equals(resolvedId) |
+            (db.exerciseSets.exerciseId.equals('') &
+                db.exerciseSets.exerciseName.equals(exerciseName)),
+      );
+    } else {
+      joinQuery.where(db.exerciseSets.exerciseName.equals(exerciseName));
+    }
+
+    final newest = await joinQuery.getSingleOrNull();
     if (newest == null) return null;
     final logId = newest.readTable(db.exerciseSets).logId;
 
-    final sets = await (db.select(db.exerciseSets)
-          ..where((s) => s.logId.equals(logId))
-          ..where((s) => s.exerciseName.equals(exerciseName))
-          ..where((s) => s.completed.equals(true)))
-        .get();
+    final setsQuery = db.select(db.exerciseSets)
+      ..where((s) => s.logId.equals(logId))
+      ..where((s) => s.completed.equals(true));
+
+    if (resolvedId != null) {
+      setsQuery.where(
+        (s) =>
+            s.exerciseId.equals(resolvedId) |
+            (s.exerciseId.equals('') & s.exerciseName.equals(exerciseName)),
+      );
+    } else {
+      setsQuery.where((s) => s.exerciseName.equals(exerciseName));
+    }
+
+    final sets = await setsQuery.get();
     if (sets.isEmpty) return null;
 
     sets.sort((a, b) {

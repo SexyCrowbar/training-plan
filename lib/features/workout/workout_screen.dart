@@ -119,7 +119,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
     final rows = _setsByExercise[ex.id] ?? const [];
     final scheme = Theme.of(context).colorScheme;
     return Consumer(builder: (context, ref, _) {
-      final top = ref.watch(lastTopSetProvider(ex.name)).valueOrNull;
+      final top = ref.watch(lastTopSetByIdProvider((ex.exerciseId, ex.name))).valueOrNull;
       final topWeight = (top != null && top.reps != null && top.weightKg != null && top.weightKg! > 0)
           ? top.weightKg
           : null;
@@ -249,6 +249,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
     double? bestPrWeight;
     int? bestPrReps;
     String? bestPrExercise;
+    String? bestPrExerciseId;
     double bestPrE1rm = 0;
     int globalSetNumber = 0;
 
@@ -274,6 +275,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
             bestPrWeight = r.weightKg;
             bestPrReps = r.reps;
             bestPrExercise = ex.name;
+            bestPrExerciseId = ex.exerciseId;
           }
         }
       }
@@ -292,10 +294,13 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
 
     try {
       // PR check: compare to best prior e1rm for that exercise.
+      // Uses the stable exerciseId so renames don't reset the PR baseline.
       PrResult? pr;
       if (bestPrExercise != null && bestPrE1rm > 0) {
-        final prior =
-            await ref.read(workoutRepositoryProvider).getSetsForExerciseName(bestPrExercise);
+        final prior = await ref.read(workoutRepositoryProvider).getSetsForExercise(
+              exerciseId: bestPrExerciseId,
+              exerciseName: bestPrExercise,
+            );
         double priorBest = 0;
         for (final s in prior) {
           final e = estimatedOneRepMax(s.set.weightKg, s.set.reps);

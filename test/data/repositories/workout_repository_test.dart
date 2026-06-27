@@ -33,12 +33,14 @@ void main() {
     required int logId,
     required String name,
     required int setNumber,
+    String exerciseId = '',
     double? weight,
     int? reps,
     bool completed = true,
   }) async {
     await db.into(db.exerciseSets).insert(ExerciseSetsCompanion.insert(
           logId: logId,
+          exerciseId: Value(exerciseId),
           exerciseName: name,
           setNumber: setNumber,
           weightKg: Value(weight),
@@ -107,6 +109,99 @@ void main() {
 
       final result = await repo.getLastSessionTopSet('Bench');
       expect(result!.weightKg, 100);
+    });
+  });
+
+  group('getSetsForExercise', () {
+    test('unifies history across a rename when exerciseId matches', () async {
+      // First log: exercise called 'Bench Press' with exerciseId 'uuid-1'
+      final log1 = await insertLog(epochMs: 1000);
+      await insertSet(
+        logId: log1,
+        name: 'Bench Press',
+        exerciseId: 'uuid-1',
+        setNumber: 1,
+        weight: 100,
+        reps: 5,
+      );
+
+      // Second log: same exerciseId but renamed to 'Barbell Bench'
+      final log2 = await insertLog(epochMs: 2000);
+      await insertSet(
+        logId: log2,
+        name: 'Barbell Bench',
+        exerciseId: 'uuid-1',
+        setNumber: 1,
+        weight: 105,
+        reps: 4,
+      );
+
+      final results = await repo.getSetsForExercise(
+        exerciseId: 'uuid-1',
+        exerciseName: 'Barbell Bench',
+      );
+
+      // Both sets from both logs should be returned (history unified across rename)
+      expect(results.length, 2);
+      final weights = results.map((r) => r.set.weightKg).toSet();
+      expect(weights, containsAll([100.0, 105.0]));
+    });
+
+    test('falls back to name when exerciseId is empty (legacy rows)', () async {
+      final log = await insertLog(epochMs: 1000);
+      // Legacy/imported row: exerciseId is empty string
+      await insertSet(
+        logId: log,
+        name: 'Squat',
+        exerciseId: '',
+        setNumber: 1,
+        weight: 120,
+        reps: 5,
+      );
+
+      final results = await repo.getSetsForExercise(
+        exerciseId: '',
+        exerciseName: 'Squat',
+      );
+
+      expect(results.length, 1);
+      expect(results.first.set.weightKg, 120.0);
+    });
+
+    test('does not return unrelated rows when exerciseId is non-empty', () async {
+      // Insert a set for 'uuid-1'
+      final log1 = await insertLog(epochMs: 1000);
+      await insertSet(
+        logId: log1,
+        name: 'Bench Press',
+        exerciseId: 'uuid-1',
+        setNumber: 1,
+        weight: 100,
+        reps: 5,
+      );
+
+      // Insert a set for a completely different exercise
+      final log2 = await insertLog(epochMs: 2000);
+      await insertSet(
+        logId: log2,
+        name: 'Nope',
+        exerciseId: 'uuid-other',
+        setNumber: 1,
+        weight: 80,
+        reps: 8,
+      );
+
+      // Query with uuid-1 but exerciseName 'Nope' — should NOT return the
+      // 'Nope'/'uuid-other' row, only the uuid-1 row.
+      final results = await repo.getSetsForExercise(
+        exerciseId: 'uuid-1',
+        exerciseName: 'Nope',
+      );
+
+      // Only the uuid-1 set should be returned (matched by id), not the
+      // 'Nope'/'uuid-other' one.
+      expect(results.length, 1);
+      expect(results.first.set.weightKg, 100.0);
     });
   });
 }

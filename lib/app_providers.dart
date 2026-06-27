@@ -157,3 +157,17 @@ final lastTopSetProvider = FutureProvider.family<ExerciseSet?, String>(
     return ref.watch(workoutRepositoryProvider).getLastSessionTopSet(exerciseName);
   },
 );
+
+/// Id-aware variant of [lastTopSetProvider]. The family key is a
+/// `(exerciseId, exerciseName)` record. When [exerciseId] is non-empty the
+/// lookup joins history by stable id (with a name fallback for legacy rows),
+/// so the "Last: …" hint survives exercise renames.
+final lastTopSetByIdProvider =
+    FutureProvider.family<ExerciseSet?, (String exerciseId, String exerciseName)>(
+  (ref, key) {
+    return ref.watch(workoutRepositoryProvider).getLastSessionTopSet(
+          key.$2,
+          exerciseId: key.$1,
+        );
+  },
+);
