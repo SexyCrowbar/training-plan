@@ -359,6 +359,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
           duration: const Duration(seconds: 2),
         ),
       );
+      ref.invalidate(lastTopSetByIdProvider);
       context.pop();
     } catch (e) {
       if (!context.mounted) return;
