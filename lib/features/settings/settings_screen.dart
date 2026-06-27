@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../../app_providers.dart';
 import '../../data/repositories/settings_repository.dart';
@@ -254,11 +253,7 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<bool> _requestPermissions() async {
-    final notifGranted = await NotificationHelper.requestPermissions();
-    if (!notifGranted) return false;
-    // SCHEDULE_EXACT_ALARM on Android 12+
-    final exactStatus = await Permission.scheduleExactAlarm.request();
-    return exactStatus.isGranted || exactStatus.isLimited;
+    return NotificationHelper.requestPermissions();
   }
 }
 

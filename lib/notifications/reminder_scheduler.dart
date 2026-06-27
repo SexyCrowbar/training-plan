@@ -33,7 +33,7 @@ class ReminderScheduler {
       target,
       _alarmId,
       _alarmCallback,
-      exact: true,
+      exact: false,
       wakeup: true,
       rescheduleOnReboot: true,
       alarmClock: false,

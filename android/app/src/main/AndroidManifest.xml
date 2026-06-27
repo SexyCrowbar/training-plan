@@ -2,11 +2,6 @@
     <!-- Notifications (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
-    <!-- Exact alarms for hourly GTG reminder chain.
-         SCHEDULE_EXACT_ALARM on Android 12 (API 31), USE_EXACT_ALARM on 13+. -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
-
     <!-- Wake device to post the notification + keep screen on during workouts. -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
