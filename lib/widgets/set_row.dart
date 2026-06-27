@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../theme/colors.dart';
+
 class SetRowData {
   final bool done;
   final String weightText;
@@ -81,7 +83,7 @@ class _SetRowState extends State<SetRow> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: scheme.onSurface.withValues(alpha: 0.6),
+                color: scheme.textMid,
               ),
             ),
           ),

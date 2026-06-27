@@ -9,6 +9,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../domain/plan/models.dart';
 import '../../domain/util/one_rep_max.dart';
+import '../../theme/colors.dart';
 import '../../widgets/confirm_modal.dart';
 import '../../widgets/rest_timer_bar.dart';
 import '../../widgets/set_row.dart';
@@ -137,7 +138,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                     '${ex.sets} × ${ex.target}  •  Rest ${ex.restSeconds}s',
                     style: TextStyle(
                       fontSize: 12,
-                      color: scheme.onSurface.withValues(alpha: 0.6),
+                      color: scheme.textMid,
                     ),
                   ),
                   Consumer(builder: (context, ref, _) {
@@ -167,7 +168,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                   ex.note,
                   style: TextStyle(
                     fontSize: 11,
-                    color: scheme.onSurface.withValues(alpha: 0.55),
+                    color: scheme.textMid,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -211,7 +212,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
           fontSize: 10,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.6,
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+          color: Theme.of(context).colorScheme.textMid,
         ),
       );
 

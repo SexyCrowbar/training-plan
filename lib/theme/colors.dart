@@ -24,6 +24,19 @@ class AppColors {
   static const onSurfaceLow = Color(0xFF475569);
 }
 
+/// Semantic muted-text tokens. Use instead of ad-hoc onSurface.withValues(alpha:)
+/// so secondary text stays WCAG-AA legible and centrally tunable.
+extension TextEmphasis on ColorScheme {
+  /// Full-emphasis text (titles, primary values).
+  Color get textHi => AppColors.onSurfaceHi;
+
+  /// Secondary/muted text (subtitles, labels, metadata) — clears WCAG AA (~6:1).
+  Color get textMid => AppColors.onSurfaceMid;
+
+  /// Faint/decorative only (NOT body text).
+  Color get textLow => AppColors.onSurfaceLow;
+}
+
 ColorScheme _schemeFor(DayTheme theme) {
   switch (theme) {
     case DayTheme.iron:

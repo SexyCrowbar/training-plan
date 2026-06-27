@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/db/app_database.dart';
 import '../domain/plan/models.dart';
+import '../theme/colors.dart';
 
 class BlockCard extends StatelessWidget {
   final String blockId;
@@ -58,7 +59,7 @@ class BlockCard extends StatelessWidget {
                               exercises.map((e) => e.name).join(' · '),
                               style: TextStyle(
                                 fontSize: 12,
-                                color: scheme.onSurface.withValues(alpha: 0.6),
+                                color: scheme.textMid,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -89,7 +90,7 @@ class BlockCard extends StatelessWidget {
                       'empty',
                       style: TextStyle(
                         fontSize: 11,
-                        color: scheme.onSurface.withValues(alpha: 0.35),
+                        color: scheme.textMid,
                       ),
                     )
                   else
