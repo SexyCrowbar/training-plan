@@ -14,6 +14,7 @@ import '../../data/models/state_snapshot.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../domain/plan/models.dart';
+import '../../domain/plan/training_plan.dart';
 
 /// Coordinates JSON import/export of history + state between the app and the
 /// file picker. Mirrors the React `data/history.json` / `data/state.json`
@@ -44,7 +45,7 @@ class ImportExportController {
         HistoryEntry(
           date: DateTime.fromMillisecondsSinceEpoch(log.date),
           day: log.dayId,
-          dayName: log.blockName, // best-effort — dayName is not persisted
+          dayName: TrainingPlan.days[log.dayId]?.name ?? '', // canonical day name (not persisted on the log)
           blockId: log.blockId,
           blockName: log.blockName,
           blockIcon: log.blockIcon,
