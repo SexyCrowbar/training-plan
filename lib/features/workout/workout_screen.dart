@@ -286,49 +286,59 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
       return;
     }
 
-    // PR check: compare to best prior e1rm for that exercise.
-    PrResult? pr;
-    if (bestPrExercise != null && bestPrE1rm > 0) {
-      final prior =
-          await ref.read(workoutRepositoryProvider).getSetsForExerciseName(bestPrExercise);
-      double priorBest = 0;
-      for (final s in prior) {
-        final e = estimatedOneRepMax(s.set.weightKg, s.set.reps);
-        if (e != null && e > priorBest) priorBest = e;
+    try {
+      // PR check: compare to best prior e1rm for that exercise.
+      PrResult? pr;
+      if (bestPrExercise != null && bestPrE1rm > 0) {
+        final prior =
+            await ref.read(workoutRepositoryProvider).getSetsForExerciseName(bestPrExercise);
+        double priorBest = 0;
+        for (final s in prior) {
+          final e = estimatedOneRepMax(s.set.weightKg, s.set.reps);
+          if (e != null && e > priorBest) priorBest = e;
+        }
+        if (bestPrE1rm > priorBest) {
+          pr = PrResult(
+            exercise: bestPrExercise,
+            weight: bestPrWeight!,
+            reps: bestPrReps!,
+            e1rm: bestPrE1rm,
+          );
+        }
       }
-      if (bestPrE1rm > priorBest) {
-        pr = PrResult(
-          exercise: bestPrExercise,
-          weight: bestPrWeight!,
-          reps: bestPrReps!,
-          e1rm: bestPrE1rm,
+
+      await ref.read(workoutRepositoryProvider).saveWorkout(
+            date: DateTime.now(),
+            templateId: templateId,
+            dayId: widget.dayId,
+            blockId: widget.blockId,
+            blockName: kBlockNames[widget.blockId] ?? widget.blockId,
+            blockIcon: kBlockIcons[widget.blockId] ?? '',
+            theme: meta.theme.name,
+            sets: sets,
+          );
+
+      if (!context.mounted) return;
+      if (pr != null) {
+        await showInfoModal(
+          context: context,
+          title: 'New PR!',
+          message:
+              '${pr.exercise}: ${pr.weight}kg × ${pr.reps} reps — est. ${pr.e1rm.toStringAsFixed(1)}kg 1RM',
+          buttonLabel: "Let's go!",
         );
       }
-    }
-
-    await ref.read(workoutRepositoryProvider).saveWorkout(
-          date: DateTime.now(),
-          templateId: templateId,
-          dayId: widget.dayId,
-          blockId: widget.blockId,
-          blockName: kBlockNames[widget.blockId] ?? widget.blockId,
-          blockIcon: kBlockIcons[widget.blockId] ?? '',
-          theme: meta.theme.name,
-          sets: sets,
-        );
-
-    if (!context.mounted) return;
-    if (pr != null) {
+      if (!context.mounted) return;
+      context.pop();
+    } catch (e) {
+      if (!context.mounted) return;
       await showInfoModal(
         context: context,
-        title: 'New PR!',
-        message:
-            '${pr.exercise}: ${pr.weight}kg × ${pr.reps} reps — est. ${pr.e1rm.toStringAsFixed(1)}kg 1RM',
-        buttonLabel: "Let's go!",
+        title: "Couldn't save",
+        message: 'Something went wrong saving this block. Your sets are still here — try again.',
       );
+      return;
     }
-    if (!context.mounted) return;
-    context.pop();
   }
 }
 
