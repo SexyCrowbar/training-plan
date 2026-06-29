@@ -11,6 +11,7 @@ import '../../theme/colors.dart';
 import '../../widgets/block_card.dart';
 import '../../widgets/day_tabs.dart';
 import '../../widgets/gtg_counter.dart';
+import '../onboarding/onboarding_sheet.dart';
 import '../settings/import_export_controller.dart';
 import '../templates/widgets/template_picker_sheet.dart';
 
@@ -88,6 +89,7 @@ class TrainScreen extends ConsumerWidget {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
+            const SliverToBoxAdapter(child: _OnboardingGate()),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -273,6 +275,53 @@ class TrainScreen extends ConsumerWidget {
     ref.read(currentDayProvider.notifier).state = 1;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Onboarding gate — shows the intro sheet exactly once after the boot data is
+// ready. Renders nothing visible; the side-effect happens in initState via a
+// post-frame callback so it never races with the first build.
+// ---------------------------------------------------------------------------
+
+class _OnboardingGate extends ConsumerStatefulWidget {
+  const _OnboardingGate();
+
+  @override
+  ConsumerState<_OnboardingGate> createState() => _OnboardingGateState();
+}
+
+class _OnboardingGateState extends ConsumerState<_OnboardingGate> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final settings = ref.read(settingsRepositoryProvider);
+      final seen = await settings.getBool(
+        SettingsKeys.onboardingSeen,
+        defaultValue: false,
+      );
+      if (seen) return;
+      // Mark as seen immediately — before the sheet opens — so a dismiss or
+      // crash never replays it.
+      await settings.setBool(SettingsKeys.onboardingSeen, true);
+      if (!mounted) return;
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        isDismissible: false,
+        enableDrag: false,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (_) => const OnboardingSheet(),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+
+// ---------------------------------------------------------------------------
 
 class _TemplateChip extends StatelessWidget {
   final List<Template> templates;

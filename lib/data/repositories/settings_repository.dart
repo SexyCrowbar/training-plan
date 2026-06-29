@@ -8,6 +8,7 @@ class SettingsKeys {
   static const endHour = 'end_hour';
   static const restTimerAlertEnabled = 'rest_timer_alert_enabled';
   static const planVersion = 'plan_version';
+  static const onboardingSeen = 'onboarding_seen';
 }
 
 class SettingsRepository {
