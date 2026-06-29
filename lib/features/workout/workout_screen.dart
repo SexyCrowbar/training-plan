@@ -55,8 +55,26 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final template = ref.watch(activeTemplateProvider).valueOrNull;
+    final templateAsync = ref.watch(activeTemplateProvider);
     final scheme = Theme.of(context).colorScheme;
+
+    if (templateAsync.hasError) {
+      return Scaffold(
+        appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Text(
+              "Couldn't load this workout.",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 15, color: scheme.textMid),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final template = templateAsync.valueOrNull;
 
     if (template == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));

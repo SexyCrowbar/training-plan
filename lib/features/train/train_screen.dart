@@ -35,8 +35,39 @@ class TrainScreen extends ConsumerWidget {
     if (boot.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+    if (boot.hasError) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Couldn't start up — something went wrong loading your data.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Theme.of(context).colorScheme.textMid,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () {
+                    ref.invalidate(seedBootProvider);
+                    ref.invalidate(historyAutoSeedProvider);
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
-    final template = ref.watch(activeTemplateProvider).valueOrNull;
+    final activeTemplateAsync = ref.watch(activeTemplateProvider);
+    final template = activeTemplateAsync.valueOrNull;
     final templates =
         ref.watch(allTemplatesProvider).valueOrNull ?? const <Template>[];
     final activeId = ref.watch(activeTemplateIdProvider).valueOrNull;
@@ -46,6 +77,7 @@ class TrainScreen extends ConsumerWidget {
     // Blocks that have at least one exercise. Doubles as the recovery-day
     // detector: when this is empty on a non-rest day (e.g. Day 6), the screen
     // shows an active-recovery note instead of block cards.
+    final templateHasError = activeTemplateAsync.hasError;
     final populatedBlocks = [
       for (final b in kBlockIds)
         if ((template?.exercisesFor(meta.id, b) ?? const []).isNotEmpty) b,
@@ -104,7 +136,18 @@ class TrainScreen extends ConsumerWidget {
                 sliver: SliverToBoxAdapter(child: GtgCounter()),
               ),
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            if (meta.isRestDay)
+            if (templateHasError)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    "Couldn't load the active template.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 15, color: scheme.textMid),
+                  ),
+                ),
+              )
+            else if (meta.isRestDay)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
