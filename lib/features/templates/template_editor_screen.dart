@@ -5,6 +5,7 @@ import '../../app_providers.dart';
 import '../../data/repositories/template_repository.dart';
 import '../../domain/plan/models.dart';
 import '../../domain/plan/training_plan.dart';
+import '../../theme/colors.dart';
 import '../../widgets/confirm_modal.dart';
 import 'widgets/block_exercise_list.dart';
 
@@ -36,18 +37,9 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       appBar: AppBar(
         title: Text(resolvedAsync.valueOrNull?.template.name ?? 'Template'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            tooltip: 'Save',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Plan saved'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-              Navigator.of(context).pop();
-            },
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Done'),
           ),
           PopupMenuButton<String>(
             onSelected: (v) async {
@@ -128,6 +120,16 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                       ),
                     );
                   },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                child: Text(
+                  'Changes save automatically.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.textMid,
+                  ),
                 ),
               ),
               if (dayMeta.isRestDay)

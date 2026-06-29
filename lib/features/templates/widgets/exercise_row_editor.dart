@@ -37,6 +37,9 @@ class _ExerciseRowEditorState extends State<ExerciseRowEditor> {
   late final TextEditingController _restCtrl;
   late final TextEditingController _noteCtrl;
 
+  String? _setsError;
+  String? _restError;
+
   @override
   void initState() {
     super.initState();
@@ -83,29 +86,41 @@ class _ExerciseRowEditorState extends State<ExerciseRowEditor> {
 
   void _commitName() {
     final v = _nameCtrl.text.trim();
-    if (v.isNotEmpty && v != widget.exercise.name) widget.onCommit(name: v);
+    if (v.isEmpty) {
+      // Restore display so it always matches the stored value.
+      _nameCtrl.text = widget.exercise.name;
+    } else if (v != widget.exercise.name) {
+      widget.onCommit(name: v);
+    }
   }
 
   void _commitSets() {
     final v = int.tryParse(_setsCtrl.text.trim());
-    if (v != null && v > 0 && v != widget.exercise.sets) {
-      widget.onCommit(sets: v);
+    if (v != null && v > 0) {
+      setState(() => _setsError = null);
+      if (v != widget.exercise.sets) widget.onCommit(sets: v);
     } else {
-      _setsCtrl.text = widget.exercise.sets.toString();
+      setState(() => _setsError = 'Must be > 0');
     }
   }
 
   void _commitTarget() {
     final v = _targetCtrl.text.trim();
-    if (v.isNotEmpty && v != widget.exercise.target) widget.onCommit(target: v);
+    if (v.isEmpty) {
+      // Restore display so it always matches the stored value.
+      _targetCtrl.text = widget.exercise.target;
+    } else if (v != widget.exercise.target) {
+      widget.onCommit(target: v);
+    }
   }
 
   void _commitRest() {
     final v = int.tryParse(_restCtrl.text.trim());
-    if (v != null && v >= 0 && v != widget.exercise.restSeconds) {
-      widget.onCommit(restSeconds: v);
+    if (v != null && v >= 0) {
+      setState(() => _restError = null);
+      if (v != widget.exercise.restSeconds) widget.onCommit(restSeconds: v);
     } else {
-      _restCtrl.text = widget.exercise.restSeconds.toString();
+      setState(() => _restError = 'Must be ≥ 0');
     }
   }
 
@@ -171,7 +186,10 @@ class _ExerciseRowEditorState extends State<ExerciseRowEditor> {
                     controller: _setsCtrl,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(hintText: '3'),
+                    decoration: InputDecoration(
+                      hintText: '3',
+                      errorText: _setsError,
+                    ),
                     onEditingComplete: _commitSets,
                     onTapOutside: (_) => _commitSets(),
                   ),
@@ -199,7 +217,10 @@ class _ExerciseRowEditorState extends State<ExerciseRowEditor> {
                     controller: _restCtrl,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(hintText: '90'),
+                    decoration: InputDecoration(
+                      hintText: '90',
+                      errorText: _restError,
+                    ),
                     onEditingComplete: _commitRest,
                     onTapOutside: (_) => _commitRest(),
                   ),
