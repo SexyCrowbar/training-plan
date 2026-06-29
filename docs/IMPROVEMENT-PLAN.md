@@ -10,29 +10,43 @@
 
 ---
 
-## Priority tiers
+## Status — updated 2026-06-28
 
-**P0 — data safety & the core promise** (do these first)
-- [x] **T1** Unify the day model (reminders fire on the *correct* rest day) — ✅ delivered by the 7-day schedule on branch `feat/seven-day-schedule`
-- [ ] **T2** GTG midnight reset + day re-sync on resume
-- [ ] **T3** Guard `saveWorkout` so a finished block is never silently lost
-- [ ] **T4** Drift migration safety net + indices (before any schema v2)
-- [ ] **T5** Re-arm the 48h reminder window in the background / after reboot
-- [ ] **T9** Replace the fictional `ARCHITECTURE.md` and fix README reminder claims
+> After the 7-day schedule feature + three improvement waves shipped & pushed to `master`.
+> Legend: **[x]** shipped · **[~]** moot/partial · **[ ]** open. Per-item sections below are the original reference specs.
+
+**P0 — data safety & the core promise**
+- [x] **T1** Unify the day model — ✅ (delivered by the 7-day schedule)
+- [x] **T2** GTG midnight reset + resume re-sync — ✅
+- [x] **T3** Guard `saveWorkout` — ✅
+- [x] **T4** Drift migration safety net + indices — ✅ (schema v2 + SchemaVerifier migration test)
+- [~] **T5** Re-arm the 48h reminder window — ❌ MOOT (master's chain design self-heals via `oneShotAt` re-arm + `rescheduleOnReboot`; the 48h-batch problem was in stashed code)
+- [x] **T9** Replace the fictional `ARCHITECTURE.md` — ✅
 
 **P1 — high-value UX & correctness**
-- [ ] **DW2** Logging-loop friction (save confirmation, keyboard traversal, prefill weight)
-- [ ] **DW4** Fix the template-editor "Save" affordance & silent field reverts
-- [ ] **DW5** Import: confirm + dedup/replace + warning
-- [ ] **DW6** First-run onboarding + notification-permission priming
-- [ ] **DW7** Train screen error/empty states
-- [ ] **T6** Switch GTG to inexact alarms; drop `USE_EXACT_ALARM`
-- [ ] **T7** Set `tz.local` for DST-correct scheduling
-- [ ] **T13** Test the highest-risk untested code (import/export, notifications, day-rollover, e1RM)
+- [x] **DW2** Logging-loop friction (save SnackBar, keyboard traversal, weight prefill) — ✅
+- [x] **DW4** Template-editor fake "Save" & silent field reverts — ✅
+- [x] **DW5** Import: confirm + dedup/replace + warning — ✅
+- [x] **DW6** First-run onboarding + notification-permission priming — ✅
+- [x] **DW7** Train screen error/empty states — ✅
+- [x] **T6** Inexact GTG alarms; drop `USE_EXACT_ALARM` — ✅
+- [~] **T7** `tz.local` DST — ❌ MOOT (no `timezone`/`zonedSchedule` code on master)
+- [x] **T13** Test the highest-risk untested code (import/export round-trip) — ✅
 
 **P2 — polish & hygiene**
-- [ ] **DW3** Stale "Last:" hint · **DW8** WCAG contrast · **DW9** token enforcement · **DW10** restore mockup identity · **DW11** polish backlog
-- [ ] **T8** Retire/repurpose `android_alarm_manager_plus` · **T10** `exercise_id` decision · **T11** repository leak · **T12** lints + CI · **T14** low-priority backlog
+- [x] **DW3** stale "Last:" hint — ✅
+- [x] **DW8** WCAG contrast — ✅
+- [~] **DW9** token enforcement — ✅ Radii/Spacing/`textMid`/display tokens shipped; ⏳ typography-hierarchy sweep deferred (changes rendered sizes, wants on-device review)
+- [x] **DW10** restore mockup identity — ✅
+- [x] **DW11** polish backlog — ✅ (⏳ except the history-card per-rebuild flicker sub-item)
+- [~] **T8** retire `android_alarm_manager_plus` — ❌ MOOT (it is the live scheduler; only residual — drop the unused `timezone` dep — was done with T6)
+- [x] **T10** `exercise_id` join+fallback — ✅ (PR/Last unified across renames; ⏳ Stats lift *picker* not yet unified by id)
+- [x] **T11** route import/export through repositories — ✅
+- [x] **T12** lints + GitHub Actions CI — ✅
+- [ ] **T14** low-priority cleanups — ⏳ (dayName ✅ via T13; the rest open)
+
+### Remaining after this work
+⏳ **DW9** typography-hierarchy sweep · **T10** Stats-picker id unification · **DW11** history-card flicker · **T14** cleanups (dead `clearAll`, unused bundled `state.json`, React-port comments, `TrainScreen` over-broad watches, midnight theme-tag edge case, stream-idiom).
 
 ---
 
