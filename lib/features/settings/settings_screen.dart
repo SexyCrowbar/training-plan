@@ -195,16 +195,34 @@ class SettingsScreen extends ConsumerWidget {
     try {
       final trimmed = text.trimLeft();
       if (trimmed.startsWith('[')) {
+        final confirmed = await showConfirmModal(
+          context: context,
+          title: 'Import workout history?',
+          message:
+              'Adds new sessions from this file. '
+              'Duplicate sessions already in your log are skipped.',
+          confirmLabel: 'Import',
+        );
+        if (!confirmed || !context.mounted) return;
         final stats = await ctrl.importHistory(text);
         if (!context.mounted) return;
+        final skippedNote = stats.skipped > 0
+            ? ' (${stats.skipped} duplicate${stats.skipped == 1 ? '' : 's'} skipped)'
+            : '';
         await showInfoModal(
           context: context,
           title: 'Import complete',
           message:
-              'Imported ${stats.logs} workout log${stats.logs == 1 ? '' : 's'} '
-              '(${stats.sets} sets).',
+              'Imported ${stats.logs} session${stats.logs == 1 ? '' : 's'}$skippedNote.',
         );
       } else {
+        final confirmed = await showConfirmModal(
+          context: context,
+          title: 'Import app state?',
+          message: 'Updates your GTG counts and week start from this file.',
+          confirmLabel: 'Import',
+        );
+        if (!confirmed || !context.mounted) return;
         final stats = await ctrl.importState(text);
         if (!context.mounted) return;
         await showInfoModal(

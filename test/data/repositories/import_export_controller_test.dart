@@ -322,6 +322,232 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
+  // Dedup history import (DW5)
+  // ---------------------------------------------------------------------------
+  group('dedup history import', () {
+    // Build a two-entry history JSON that we can import twice.
+    Future<String> twoEntryHistoryJson() async {
+      await workouts.saveWorkout(
+        date: DateTime.utc(2026, 3, 1, 8, 0, 0),
+        templateId: null,
+        dayId: 1,
+        blockId: 'power',
+        blockName: 'Morning Power',
+        blockIcon: '⚡',
+        theme: 'iron',
+        sets: [
+          SetInput(
+            exerciseId: '',
+            exerciseName: 'Squat',
+            setNumber: 1,
+            weightKg: 120.0,
+            reps: 5,
+            completed: true,
+          ),
+        ],
+      );
+      await workouts.saveWorkout(
+        date: DateTime.utc(2026, 3, 3, 9, 0, 0),
+        templateId: null,
+        dayId: 2,
+        blockId: 'hypertrophy',
+        blockName: 'Afternoon Hypertrophy',
+        blockIcon: '💪',
+        theme: 'body',
+        sets: [
+          SetInput(
+            exerciseId: '',
+            exerciseName: 'Leg Press',
+            setNumber: 1,
+            weightKg: 200.0,
+            reps: 10,
+            completed: true,
+          ),
+        ],
+      );
+      return ctrl.buildHistoryJson();
+    }
+
+    test('re-importing the same file adds zero duplicates', () async {
+      final json = await twoEntryHistoryJson();
+
+      // Import into a fresh db — first import should succeed with 2 logs.
+      final db2 = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(db2.close);
+      final container2 = ProviderContainer(
+        overrides: [appDatabaseProvider.overrideWithValue(db2)],
+      );
+      addTearDown(container2.dispose);
+      final ctrl2 = container2.read(importExportControllerProvider);
+
+      final stats1 = await ctrl2.importHistory(json);
+      expect(stats1.logs, equals(2), reason: 'first import should add 2 logs');
+      expect(
+        stats1.skipped,
+        equals(0),
+        reason: 'nothing skipped on first import',
+      );
+
+      final countAfterFirst = (await db2.select(db2.workoutLogs).get()).length;
+      expect(countAfterFirst, equals(2));
+
+      // Second import of the exact same JSON — all duplicates should be skipped.
+      final stats2 = await ctrl2.importHistory(json);
+      expect(
+        stats2.skipped,
+        equals(2),
+        reason: 'both entries are duplicates on second import',
+      );
+      expect(
+        stats2.logs,
+        equals(0),
+        reason: 'no new logs added on second import',
+      );
+
+      final countAfterSecond = (await db2.select(db2.workoutLogs).get()).length;
+      expect(
+        countAfterSecond,
+        equals(2),
+        reason: 'log count must not increase after re-import',
+      );
+    });
+
+    test(
+      'genuinely new entry (different date) still imports on second file',
+      () async {
+        final json = await twoEntryHistoryJson();
+
+        final db2 = AppDatabase.forTesting(NativeDatabase.memory());
+        addTearDown(db2.close);
+        final container2 = ProviderContainer(
+          overrides: [appDatabaseProvider.overrideWithValue(db2)],
+        );
+        addTearDown(container2.dispose);
+        final ctrl2 = container2.read(importExportControllerProvider);
+        final workouts2 = container2.read(workoutRepositoryProvider);
+
+        // First import.
+        await ctrl2.importHistory(json);
+
+        // Build a second file with one duplicate + one genuinely new entry.
+        final db3 = AppDatabase.forTesting(NativeDatabase.memory());
+        addTearDown(db3.close);
+        final container3 = ProviderContainer(
+          overrides: [appDatabaseProvider.overrideWithValue(db3)],
+        );
+        addTearDown(container3.dispose);
+        final workouts3 = container3.read(workoutRepositoryProvider);
+        final ctrl3 = container3.read(importExportControllerProvider);
+
+        // Duplicate: same date / dayId / blockId as the first entry above.
+        await workouts3.saveWorkout(
+          date: DateTime.utc(2026, 3, 1, 8, 0, 0),
+          templateId: null,
+          dayId: 1,
+          blockId: 'power',
+          blockName: 'Morning Power',
+          blockIcon: '⚡',
+          theme: 'iron',
+          sets: [
+            SetInput(
+              exerciseId: '',
+              exerciseName: 'Squat',
+              setNumber: 1,
+              weightKg: 120.0,
+              reps: 5,
+              completed: true,
+            ),
+          ],
+        );
+        // New entry: different date.
+        await workouts3.saveWorkout(
+          date: DateTime.utc(2026, 3, 10, 10, 0, 0),
+          templateId: null,
+          dayId: 3,
+          blockId: 'strength',
+          blockName: 'Strength',
+          blockIcon: '🏋️',
+          theme: 'iron',
+          sets: [
+            SetInput(
+              exerciseId: '',
+              exerciseName: 'Deadlift',
+              setNumber: 1,
+              weightKg: 180.0,
+              reps: 3,
+              completed: true,
+            ),
+          ],
+        );
+        final json2 = await ctrl3.buildHistoryJson();
+
+        // Import the mixed file into db2.
+        final stats = await ctrl2.importHistory(json2);
+        expect(
+          stats.logs,
+          equals(1),
+          reason: 'only the new entry should be added',
+        );
+        expect(
+          stats.skipped,
+          equals(1),
+          reason: 'one duplicate should be skipped',
+        );
+
+        final allLogs = await workouts2.getAllLogs();
+        expect(allLogs, hasLength(3), reason: '2 original + 1 new = 3 total');
+      },
+    );
+
+    test(
+      'within-file duplicates are also skipped (de-dup inside file)',
+      () async {
+        // Manually build a JSON with the same entry listed twice.
+        // date is an ISO-8601 string as expected by HistoryEntry.fromJson.
+        const dupJson = '''
+[
+  {
+    "date": "2026-05-01T08:00:00.000Z",
+    "day": 1,
+    "dayName": "Day 1",
+    "blockId": "power",
+    "blockName": "Power",
+    "blockIcon": "⚡",
+    "theme": "iron",
+    "exercises": [{"name": "Squat", "sets": [{"done": true, "weight": "100", "reps": "5"}]}]
+  },
+  {
+    "date": "2026-05-01T08:00:00.000Z",
+    "day": 1,
+    "dayName": "Day 1",
+    "blockId": "power",
+    "blockName": "Power",
+    "blockIcon": "⚡",
+    "theme": "iron",
+    "exercises": [{"name": "Squat", "sets": [{"done": true, "weight": "100", "reps": "5"}]}]
+  }
+]
+''';
+
+        final db2 = AppDatabase.forTesting(NativeDatabase.memory());
+        addTearDown(db2.close);
+        final container2 = ProviderContainer(
+          overrides: [appDatabaseProvider.overrideWithValue(db2)],
+        );
+        addTearDown(container2.dispose);
+        final ctrl2 = container2.read(importExportControllerProvider);
+
+        final stats = await ctrl2.importHistory(dupJson);
+        expect(stats.logs, equals(1), reason: 'only first occurrence imported');
+        expect(stats.skipped, equals(1), reason: 'second occurrence skipped');
+
+        final logs = await db2.select(db2.workoutLogs).get();
+        expect(logs, hasLength(1));
+      },
+    );
+  });
+
+  // ---------------------------------------------------------------------------
   // State round-trip
   // ---------------------------------------------------------------------------
   group('state round-trip', () {

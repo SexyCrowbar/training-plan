@@ -125,6 +125,11 @@ class ImportExportController {
   /// Import workout history from the `history.json` shape. Each entry becomes
   /// a new workout log with `template_id = null` (imported history predates
   /// the Flutter templates feature).
+  ///
+  /// Entries are de-duplicated by (date-millis, dayId, blockId): any entry
+  /// whose key already exists in the database — or appears more than once
+  /// within the file itself — is skipped. The returned [ImportStats.skipped]
+  /// count reflects how many entries were not written.
   Future<ImportStats> importHistory(String jsonText) async {
     final raw = jsonDecode(jsonText);
     if (raw is! List) {
@@ -134,9 +139,25 @@ class ImportExportController {
       for (final e in raw) HistoryEntry.fromJson(e as Map<String, dynamic>),
     ];
 
+    // Build a set of existing keys from the database so we can skip duplicates.
+    final existingLogs = await _workouts.getAllLogs();
+    final existingKeys = <String>{
+      for (final l in existingLogs) '${l.date}|${l.dayId}|${l.blockId}',
+    };
+
     int logs = 0;
     int sets = 0;
+    int skipped = 0;
     for (final entry in entries) {
+      final key =
+          '${entry.date.millisecondsSinceEpoch}|${entry.day}|${entry.blockId}';
+      if (existingKeys.contains(key)) {
+        skipped++;
+        continue;
+      }
+      // Mark as seen so within-file duplicates are also skipped.
+      existingKeys.add(key);
+
       final setInputs = <SetInput>[];
       var setNumber = 0;
       for (final ex in entry.exercises) {
@@ -167,7 +188,7 @@ class ImportExportController {
       logs++;
       sets += setInputs.length;
     }
-    return ImportStats(logs: logs, sets: sets);
+    return ImportStats(logs: logs, sets: sets, skipped: skipped);
   }
 
   /// Import GTG counts + optional weekStartDate from the `state.json` shape.
@@ -277,7 +298,8 @@ class ImportExportController {
 class ImportStats {
   final int logs;
   final int sets;
-  ImportStats({required this.logs, required this.sets});
+  final int skipped;
+  ImportStats({required this.logs, required this.sets, this.skipped = 0});
 }
 
 class ImportStateStats {
